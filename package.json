@@ -1,26 +1,43 @@
 {
-  "name": "galaxyai",
+  "name": "orionxflow",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "trigger:dev": "trigger dev"
   },
   "dependencies": {
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "@clerk/nextjs": "^6.14.7",
+    "@google/generative-ai": "^0.24.0",
+    "@prisma/client": "6.2.1",
+    "@types/fluent-ffmpeg": "2.1.28",
+    "date-fns": "^4.1.0",
+    "fluent-ffmpeg": "2.1.3",
+    "lucide-react": "^0.469.0",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "reactflow": "^11.11.4",
+    "transloadit": "^4.4.0",
+    "zod": "^3.24.1",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@trigger.dev/build": "4.3.3",
+    "@trigger.dev/sdk": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
+    "eslint-config-next": "^16.1.6",
+    "postcss": "^8",
+    "prisma": "6.2.1",
+    "tailwindcss": "^4.1.0",
+    "trigger.dev": "^4.3.3",
     "typescript": "^5"
   }
 }

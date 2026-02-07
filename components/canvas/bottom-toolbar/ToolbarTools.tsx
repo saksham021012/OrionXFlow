@@ -1,0 +1,35 @@
+import { MousePointer2, Hand } from 'lucide-react'
+
+interface ToolbarToolsProps {
+    activeTool: 'select' | 'hand'
+    setActiveTool: (tool: 'select' | 'hand') => void
+}
+
+export function ToolbarTools({ activeTool, setActiveTool }: ToolbarToolsProps) {
+    return (
+        <div className="flex items-center gap-1">
+            <button
+                onClick={() => setActiveTool('select')}
+                className={`p-2 rounded-lg transition-all ${
+                    activeTool === 'select'
+                        ? 'bg-[#FFFFA5] text-black shadow-sm'
+                        : 'text-[#a0a0a0] hover:text-white hover:bg-[#2a2a2a]'
+                }`}
+                title="Select Tool"
+            >
+                <MousePointer2 className="w-4 h-4 fill-current" />
+            </button>
+            <button
+                onClick={() => setActiveTool('hand')}
+                className={`p-2 rounded-lg transition-all ${
+                    activeTool === 'hand'
+                        ? 'bg-[#FFFFA5] text-black shadow-sm'
+                        : 'text-[#a0a0a0] hover:text-white hover:bg-[#2a2a2a]'
+                }`}
+                title="Hand Tool"
+            >
+                <Hand className="w-4 h-4" />
+            </button>
+        </div>
+    )
+}
