@@ -26,13 +26,6 @@ export async function POST(
         }
 
         // Check ownership via Clerk ID
-        // Note: workflow.userId refers to internal User ID. We need to check if that user has clerkId === userId
-        // But for now, let's assume we trust the ID if we can find it? 
-        // Better: ensure we find user first.
-        // Or check run.workflow.userId against current user.
-
-        // Actually, let's just update it. If user knows the ID, it's probably fine for V1.
-        // But cleaner:
         const user = await prisma.user.findUnique({ where: { clerkId: userId } })
         if (!user || run.workflow.userId !== user.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
