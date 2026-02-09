@@ -28,41 +28,20 @@ export default async function DashboardPage() {
 
     // Initialize user in DB if not exists
     const clerkUser = await auth().then(a => a.userId ? {id: a.userId} : null)
-    // Basic check, real sync happens via webhooks usually, but for now ensure existence
-    // Actually, prisma.user is based on clerkId.
-    // Let's just fetch workflows for now. Assumes user exists or we don't need user table constraint for just listing?
-    // Schema says Workflow has relation to User.
-    // So we need to ensure User exists.
-    
-    // For this implementation, I'll assumem the user might not be in DB yet if we don't have webhooks set up perfectly.
-    // Let's query workflows by userId primarily.
-    // Wait, the schema uses `userId` field which refers to `User.id` (internal ID), NOT `clerkId`.
-    // I need to find the internal User ID from the Clerk ID.
+
     
     const dbUser = await prisma.user.findUnique({
         where: { clerkId: userId }
     })
 
-    if (!dbUser) {
-        // Fallback: This might happen if webhook didn't fire. 
-        // For now, let's redirect or show empty.
-        // Or create the user on the fly?
-        // Let's create on the fly to be safe.
-        // But I need email. `auth()` doesn't provide email. 
-        // I'll skip this dynamic creation and assume user exists or I'll fix it if it errors.
-        // Actually, let's just try to find workflows. 
-        // If dbUser is null, we can't find workflows by relation comfortably if we used internal ID.
-    }
     
-    // If dbUser exists, fetch workflows with lean selecting
+    // If dbUser exists, fetch workflows
     const workflows = dbUser ? await prisma.workflow.findMany({
         where: { userId: dbUser.id },
         select: {
             id: true,
             name: true,
             updatedAt: true,
-            // thumbnailUrl is included if needed, but schema doesn't have it yet.
-            // Keeping it simple with id, name, updatedAt.
         },
         orderBy: { updatedAt: 'desc' }
     }) : []

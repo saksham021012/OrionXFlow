@@ -1,5 +1,4 @@
 import { Loader2, Search, Plus } from 'lucide-react'
-
 export default function Loading() {
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-background">
