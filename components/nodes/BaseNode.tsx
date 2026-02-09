@@ -14,7 +14,6 @@ interface BaseNodeProps extends NodeProps<NodeData> {
 import { useWorkflowStore } from '@/store/workflowStore'
 import { Pencil, Trash2 } from 'lucide-react'
 
-// ... existing interfaces ...
 
 // Handle color mapping based on type
 const getHandleColor = (id: string): string => {

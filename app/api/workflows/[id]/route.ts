@@ -99,8 +99,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Workflow not found' }, { status: 404 })
         }
 
-        // A direct delete (on a primary key) is significantly more efficient 
-        // for leveraging native DB cascades than deleteMany.
+
         await prisma.workflow.delete({
             where: { id: workflowToVerify.id }
         })

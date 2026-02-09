@@ -2,7 +2,7 @@
 
 import { Loader2 } from 'lucide-react'
 
-// Define the interface locally or import it if shared (it was local in RightSidebar)
+// Define the interface locally or import it if shared 
 export interface NodeExecution {
   nodeId: string
   nodeType: string
@@ -48,7 +48,7 @@ export function NodeExecutionDetails({ node }: NodeExecutionDetailsProps) {
     if (typeof node.outputs === 'string') {
       value = node.outputs
     } else if (typeof node.outputs === 'object') {
-      // Handle nodes that wrap their result in a 'result' or 'outputs' field
+      
       const data = node.outputs.result || node.outputs.outputs || node.outputs
       
       // Extract URL or specific field
