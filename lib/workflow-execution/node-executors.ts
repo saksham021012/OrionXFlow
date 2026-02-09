@@ -43,9 +43,24 @@ async function pollTaskCompletion(handleId: string, runId: string) {
 function extractImageUrl(output: any): string | null {
     if (!output) return null
     if (typeof output === 'string') return output
+
+    // Check for direct properties
     if (output.imageUrl) return output.imageUrl
     if (output.frameUrl) return output.frameUrl
     if (output.url) return output.url
+
+    // Check for nested result object (from node execution)
+    if (output.result) {
+        const result = output.result
+        if (typeof result === 'string') return result
+
+        if (result.imageUrl) return result.imageUrl
+        if (result.frameUrl) return result.frameUrl
+        if (result.url) return result.url
+        // Handle generic result key that is a URL
+        if (result.result && typeof result.result === 'string') return result.result
+    }
+
     return null
 }
 
@@ -76,9 +91,20 @@ export async function executeLLMNode(
 
     // Get all connected images and videos
     const imageEdges = edges.filter((e) => e.target === node.id && (e.targetHandle?.startsWith('image_') || e.targetHandle === 'images'))
+
+    // DEBUG: Log edges and extraction
+    console.log(`[DEBUG LLM] Image edges found: ${imageEdges.length}`)
+    imageEdges.forEach(e => {
+        const sourceOutput = outputs.get(e.source)
+        console.log(`[DEBUG LLM] Source ${e.source} output:`, JSON.stringify(sourceOutput, null, 2))
+        console.log(`[DEBUG LLM] Extracted:`, extractImageUrl(sourceOutput))
+    })
+
     const images = imageEdges
         .map((e) => extractImageUrl(outputs.get(e.source)))
         .filter(Boolean) as string[]
+
+    console.log(`[DEBUG LLM] Final images array:`, images)
 
     const selectedModel = node.data.model || 'gemini-2.5-flash-lite'
     console.log(`[DEBUG] Triggering LLM with model: ${selectedModel}`)

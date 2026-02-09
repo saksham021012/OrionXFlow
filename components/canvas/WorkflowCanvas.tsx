@@ -123,7 +123,7 @@ export default function WorkflowCanvas() {
           color="#262626"
         />
         <MiniMap
-          className="bg-secondary border border-border"
+          className="bg-secondary border border-border !w-32 !h-24 sm:!w-40 sm:!h-32 md:!w-48 md:!h-36"
           nodeColor="#8b5cf6"
           maskColor="rgba(0, 0, 0, 0.6)"
         />

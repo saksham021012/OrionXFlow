@@ -127,9 +127,9 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
 
   if (loading) {
       return (
-          <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#0a0a0a] text-white gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm font-medium tracking-wide animate-pulse">Loading Workflow</p>
+          <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#0a0a0a] text-white gap-3 sm:gap-4 px-4">
+              <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-primary" />
+              <p className="text-xs sm:text-sm font-medium tracking-wide animate-pulse">Loading Workflow</p>
           </div>
       )
   }
@@ -138,10 +138,10 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
     <ReactFlowProvider>
       <MainLayout>
         {/* Floating Workflow Name Bubble */}
-        <div className="absolute top-4 left-[64px] z-50 pointer-events-none">
+        <div className="absolute top-3 sm:top-4 left-14 sm:left-[64px] z-50 pointer-events-none">
           <div className="pointer-events-auto">
             {isEditingName ? (
-              <div className="px-5 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#333] shadow-2xl backdrop-blur-md">
+              <div className="px-3 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#1a1a1a] border border-[#333] shadow-2xl backdrop-blur-md">
                 <input
                   type="text"
                   value={editName}
@@ -149,20 +149,20 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
                   onBlur={handleNameFinish}
                   onKeyDown={handleNameKeyDown}
                   autoFocus
-                  className="text-sm font-medium text-white bg-transparent outline-none w-full min-w-[120px]"
+                  className="text-xs sm:text-sm font-medium text-white bg-transparent outline-none w-full min-w-[100px] sm:min-w-[120px]"
                 />
               </div>
             ) : (
               <div 
-                className="px-5 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:border-[#404040] cursor-pointer transition-all duration-200 shadow-xl backdrop-blur-md group"
+                className="px-3 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:border-[#404040] cursor-pointer transition-all duration-200 shadow-xl backdrop-blur-md group"
                 onClick={handleNameClick}
               >
                 <div className="flex items-center gap-2">
-                  <h1 className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
+                  <h1 className="text-xs sm:text-sm font-medium text-white/90 group-hover:text-white transition-colors truncate max-w-[150px] sm:max-w-none">
                     {workflowName.toLowerCase()}
                   </h1>
                   {saving && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" title="Saving..." />
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse flex-shrink-0" title="Saving..." />
                   )}
                 </div>
               </div>

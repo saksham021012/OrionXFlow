@@ -42,15 +42,15 @@ export default function LeftSidebar() {
       {/* Expandable Panel */}
       <div
         className={`bg-[#0a0a0a] border-r border-[#2a2a2a] transition-all duration-300 overflow-hidden ${
-          isExpanded ? 'w-64' : 'w-0'
+          isExpanded ? 'w-56 sm:w-64' : 'w-0'
         }`}
       >
-        <div className="w-64 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        <div className="w-56 sm:w-64 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           {/* Top Spacer for floating bubble */}
-          <div className="h-16" />
+          <div className="h-12 sm:h-14 md:h-16" />
           
           {(activePanel === 'search' || activePanel === 'nodes') && (
-            <div className="p-4 pt-0 space-y-6">
+            <div className="p-3 sm:p-4 pt-0 space-y-4 sm:space-y-6">
               {/* Nodes Panel */}
               <WorkflowNodesPanel />
 

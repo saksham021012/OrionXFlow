@@ -14,7 +14,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <LeftSidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {children}
       </div>
 

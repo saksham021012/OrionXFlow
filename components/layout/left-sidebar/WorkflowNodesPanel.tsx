@@ -23,27 +23,27 @@ export function WorkflowNodesPanel() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b6b]" />
+        <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#6b6b6b]" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search nodes..."
-          className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl pl-11 pr-4 py-2.5 text-sm text-white placeholder:text-[#6b6b6b] focus:outline-none focus:ring-1 focus:ring-[#404040] transition-all shadow-sm"
+          className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg sm:rounded-xl pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white placeholder:text-[#6b6b6b] focus:outline-none focus:ring-1 focus:ring-[#404040] transition-all shadow-sm"
         />
       </div>
 
       {/* Quick Access */}
       <div>
-        <h3 className="text-xs font-semibold text-[#a0a0a0] uppercase mb-3 tracking-wider">
+        <h3 className="text-[10px] sm:text-xs font-semibold text-[#a0a0a0] uppercase mb-2 sm:mb-3 tracking-wider">
           Quick Access
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           {/* First row: Text and Image */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
             {filteredNodes.slice(0, 2).map((node) => {
               const Icon = node.icon
               return (
@@ -52,17 +52,17 @@ export function WorkflowNodesPanel() {
                   onClick={() => handleAddNode(node.type)}
                   onDragStart={(e) => onDragStart(e, node.type)}
                   draggable
-                  className="h-20 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-2 cursor-grab active:cursor-grabbing"
+                  className="h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-1.5 sm:gap-2 cursor-grab active:cursor-grabbing"
                 >
-                  <Icon className="w-5 h-5 text-white" />
-                  <span className="text-xs text-white font-medium">{node.label}</span>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <span className="text-[10px] sm:text-xs text-white font-medium">{node.label}</span>
                 </button>
               )
             })}
           </div>
           
           {/* Second row: Video */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
             {filteredNodes.slice(2, 3).map((node) => {
               const Icon = node.icon
               return (
@@ -71,10 +71,10 @@ export function WorkflowNodesPanel() {
                   onClick={() => handleAddNode(node.type)}
                   onDragStart={(e) => onDragStart(e, node.type)}
                   draggable
-                  className="h-20 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-2 cursor-grab active:cursor-grabbing"
+                  className="h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-1.5 sm:gap-2 cursor-grab active:cursor-grabbing"
                 >
-                  <Icon className="w-5 h-5 text-white" />
-                  <span className="text-xs text-white font-medium">{node.label}</span>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <span className="text-[10px] sm:text-xs text-white font-medium">{node.label}</span>
                 </button>
               )
             })}
@@ -89,16 +89,16 @@ export function WorkflowNodesPanel() {
                 onClick={() => handleAddNode(node.type)}
                 onDragStart={(e) => onDragStart(e, node.type)}
                 draggable
-                className="w-full h-20 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-2 cursor-grab active:cursor-grabbing"
+                className="w-full h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-1.5 sm:gap-2 cursor-grab active:cursor-grabbing"
               >
-                <Icon className="w-5 h-5 text-white" />
-                <span className="text-xs text-white font-medium">{node.label}</span>
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <span className="text-[10px] sm:text-xs text-white font-medium">{node.label}</span>
               </button>
             )
           })}
 
           {/* Remaining nodes: Crop Image and Extract Frame */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
             {filteredNodes.slice(4, 6).map((node) => {
               const Icon = node.icon
               return (
@@ -107,10 +107,10 @@ export function WorkflowNodesPanel() {
                   onClick={() => handleAddNode(node.type)}
                   onDragStart={(e) => onDragStart(e, node.type)}
                   draggable
-                  className="h-20 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-2 cursor-grab active:cursor-grabbing"
+                  className="h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all group flex flex-col items-center justify-center gap-1.5 sm:gap-2 cursor-grab active:cursor-grabbing"
                 >
-                  <Icon className="w-5 h-5 text-white" />
-                  <span className="text-xs text-white font-medium">{node.label}</span>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <span className="text-[10px] sm:text-xs text-white font-medium">{node.label}</span>
                 </button>
               )
             })}

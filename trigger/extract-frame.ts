@@ -3,6 +3,7 @@ import ffmpeg from 'fluent-ffmpeg'
 import { promises as fs } from 'fs'
 import path from 'path'
 import os from 'os'
+import { Transloadit } from 'transloadit'
 
 export const extractFrameTask = task({
     id: 'extract-frame',
@@ -47,19 +48,43 @@ export const extractFrameTask = task({
                     .run()
             })
 
-            // Read extracted frame
-            const frameBuffer = await fs.readFile(outputPath)
-            const base64 = frameBuffer.toString('base64')
-            const dataUrl = `data:image/jpeg;base64,${base64}`
+            // Upload extracted frame to Transloadit
+            const transloadit = new Transloadit({
+                authKey: process.env.NEXT_PUBLIC_TRANSLOADIT_KEY!,
+                authSecret: process.env.TRANSLOADIT_SECRET!,
+            })
+
+            const assembly = await transloadit.createAssembly({
+                params: {
+                    steps: {
+                        ':original': {
+                            robot: '/upload/handle',
+                        }
+                    }
+                },
+                files: {
+                    file: outputPath
+                }
+            })
+
+            const completedAssembly = await transloadit.awaitAssemblyCompletion(assembly.assembly_id!)
+
+            // Try to get file from results first, then fall back to uploads
+            const uploadedFile = completedAssembly.results?.[':original']?.[0] || completedAssembly.uploads?.[0]
+
+            if (!uploadedFile?.ssl_url) {
+                throw new Error('Transloadit upload failed: No URL returned')
+            }
 
             // Cleanup
             await fs.unlink(outputPath)
 
             return {
                 success: true,
-                frameUrl: dataUrl,
+                frameUrl: uploadedFile.ssl_url,
             }
         } catch (error: any) {
+            console.error('Extract Frame Error:', error)
             return {
                 success: false,
                 error: error.message || 'Frame extraction failed',

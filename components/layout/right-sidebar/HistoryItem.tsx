@@ -31,32 +31,32 @@ export function HistoryItem({ run, isExpanded, onToggle }: HistoryItemProps) {
   }
 
   return (
-    <div className="bg-[#2a2a2a] rounded-lg border border-[#404040] overflow-hidden hover:border-primary/30 transition-all">
+    <div className="bg-[#2a2a2a] rounded-md sm:rounded-lg border border-[#404040] overflow-hidden hover:border-primary/30 transition-all">
       <button
         onClick={onToggle}
-        className="w-full p-3 text-left hover:bg-[#333333] transition-all"
+        className="w-full p-2 sm:p-3 text-left hover:bg-[#333333] transition-all"
       >
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-medium text-white">
+          <span className="text-xs sm:text-sm font-medium text-white">
             Run #{run.id.slice(-6)}
           </span>
-          <span className={`text-xs px-2 py-1 rounded capitalize ${getStatusColor(run.status)}`}>
+          <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded capitalize ${getStatusColor(run.status)}`}>
             {run.status}
           </span>
         </div>
-        <p className="text-xs text-[#a0a0a0]">
+        <p className="text-[10px] sm:text-xs text-[#a0a0a0]">
           {formatDistanceToNow(new Date(run.startedAt), { addSuffix: true })}
         </p>
-        <p className="text-xs text-[#a0a0a0] capitalize">
+        <p className="text-[10px] sm:text-xs text-[#a0a0a0] capitalize">
           {run.executionType}
         </p>
       </button>
 
       {isExpanded && run.nodeExecutions && (
-        <div className="border-t border-[#404040] p-3 space-y-2">
+        <div className="border-t border-[#404040] p-2 sm:p-3 space-y-1.5 sm:space-y-2">
           {run.nodeExecutions.length === 0 && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Loader2 className="w-3 h-3 animate-spin"/> Initializing nodes...
+            <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin"/> Initializing nodes...
             </p>
           )}
           {run.nodeExecutions.map((node, index) => (

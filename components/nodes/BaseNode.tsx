@@ -83,7 +83,7 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
       className={`
         min-w-[280px] max-w-[400px] rounded-lg border bg-[#1a1a1a] p-4 shadow-md transition-all relative group
         ${selected ? 'border-primary ring-2 ring-primary/20' : 'border-[#2a2a2a]'}
-        ${isRunning ? 'border-primary shadow-[0_0_20px_rgba(34,211,238,0.15)] ring-1 ring-primary/50' : ''}
+        ${isRunning ? 'border-primary shadow-[0_0_20px_rgba(34,211,238,0.3)] ring-1 ring-primary/50 animate-pulse' : ''}
         ${isFailed ? 'border-error shadow-[0_0_15px_rgba(239,68,68,0.15)] ring-1 ring-error/50' : ''}
         ${isCompleted ? 'border-success/50' : ''}
       `}

@@ -24,21 +24,21 @@ export function WorkflowActionsPanel({
 
   return (
     <div>
-      <h3 className="text-xs font-semibold text-[#a0a0a0] uppercase mb-3 tracking-wider">
+      <h3 className="text-[10px] sm:text-xs font-semibold text-[#a0a0a0] uppercase mb-2 sm:mb-3 tracking-wider">
         Actions
       </h3>
-      <div className="space-y-2">
+      <div className="space-y-1.5 sm:space-y-2">
         {/* Run Workflow - Full Width */}
         {executing ? (
           <button
             onClick={handleCancelWorkflow}
             disabled={cancelling}
-            className="w-full h-12 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 font-semibold"
+            className="w-full h-10 sm:h-12 rounded-md sm:rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 font-semibold text-xs sm:text-sm"
           >
             {cancelling ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
             ) : (
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 animate-pulse" />
             )}
             <span>
               {cancelling ? 'Stopping...' : 'Stop Execution'}
@@ -48,17 +48,17 @@ export function WorkflowActionsPanel({
           <button
             onClick={handleRunWorkflow}
             disabled={executing || nodes.length === 0}
-            className="w-full h-12 rounded-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+            className="w-full h-10 sm:h-12 rounded-md sm:rounded-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
           >
-            <Play className="w-4 h-4 text-white fill-white" />
-            <span className="text-sm text-white font-semibold">
+            <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-white" />
+            <span className="text-xs sm:text-sm text-white font-semibold">
               Run Workflow
             </span>
           </button>
         )}
         
         {/* New and Save */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button
             onClick={() => {
               useWorkflowStore.getState().setNodes([])
@@ -66,18 +66,18 @@ export function WorkflowActionsPanel({
               useWorkflowStore.getState().setWorkflowName('Untitled Workflow')
               useWorkflowStore.getState().setWorkflowId(null)
             }}
-            className="h-12 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex items-center justify-center gap-2"
+            className="h-10 sm:h-12 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex items-center justify-center gap-1.5 sm:gap-2"
           >
-            <Plus className="w-4 h-4 text-white" />
-            <span className="text-sm text-white font-medium">New</span>
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+            <span className="text-xs sm:text-sm text-white font-medium">New</span>
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="h-12 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="h-10 sm:h-12 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 text-white" />}
-            <span className="text-sm text-white font-medium">Save</span>
+            {saving ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-white" /> : <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />}
+            <span className="text-xs sm:text-sm text-white font-medium">Save</span>
           </button>
         </div>
       </div>

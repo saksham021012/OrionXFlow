@@ -33,9 +33,9 @@ export function UserMenu() {
 
     if (!isLoaded) {
         return (
-            <div className="h-10 flex items-center gap-2 px-2 animate-pulse">
-                <div className="w-8 h-8 rounded-full bg-[#2a2a2a]"></div>
-                <div className="h-4 w-24 bg-[#2a2a2a] rounded"></div>
+            <div className="h-9 sm:h-10 flex items-center gap-2 px-1.5 sm:px-2 animate-pulse">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#2a2a2a]"></div>
+                <div className="h-3 sm:h-4 w-20 sm:w-24 bg-[#2a2a2a] rounded hidden md:block"></div>
             </div>
         )
     }
@@ -49,10 +49,10 @@ export function UserMenu() {
         <div className="relative" ref={menuRef}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#1a1a1a] transition-colors text-left group cursor-pointer"
+                className="w-full flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-[#1a1a1a] transition-colors text-left group cursor-pointer"
             >
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium text-sm shrink-0 overflow-hidden">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium text-xs sm:text-sm shrink-0 overflow-hidden">
                     {user.imageUrl ? (
                         <img src={user.imageUrl} alt={identifier} className="w-full h-full object-cover" />
                     ) : (
@@ -61,23 +61,23 @@ export function UserMenu() {
                 </div>
                 
                 {/* Name */}
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
+                <div className="flex-1 min-w-0 hidden md:block">
+                    <p className="text-xs sm:text-sm font-medium text-white truncate">
                         {identifier}
                     </p>
                 </div>
 
                 {/* Chevron */}
-                <ChevronDown className={`w-4 h-4 text-[#666] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#666] transition-transform duration-200 hidden md:block ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown */}
             {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg shadow-xl z-20 overflow-hidden py-1">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-md sm:rounded-lg shadow-xl z-20 overflow-hidden py-1">
                     <button 
                         onClick={handleLogout}
                         disabled={isLoggingOut}
-                        className="w-full px-3 py-2 text-left text-xs font-medium text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-medium text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                     >
                         {isLoggingOut ? <Loader2 className="w-3 h-3 animate-spin" /> : <LogOut className="w-3 h-3" />}
                         Log out

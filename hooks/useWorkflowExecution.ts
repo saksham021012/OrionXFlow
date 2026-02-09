@@ -23,7 +23,12 @@ export function useWorkflowExecution() {
         })
 
         if (!res.ok) throw new Error('Save failed')
-        return id ? data : await res.json()
+
+        // Return full response for new workflows to get ID
+        if (isNew) {
+            return await res.json()
+        }
+        return data
     }
 
     const handleSave = async () => {
@@ -33,7 +38,7 @@ export function useWorkflowExecution() {
             const { workflowName, nodes, edges, workflowId } = useWorkflowStore.getState()
             const result = await saveWorkflow(workflowId, { name: workflowName, nodes, edges })
 
-            if (!workflowId) setWorkflowId(result.id)
+            if (!workflowId || workflowId === 'new') setWorkflowId(result.id)
             alert('Workflow saved successfully!')
         } catch (error) {
             console.error(error)
@@ -85,8 +90,11 @@ export function useWorkflowExecution() {
 
             // Save first
             const savedData = await saveWorkflow(currentId, { name: workflowName, nodes, edges })
-            const wId = currentId || savedData.id
-            if (!currentId) setWorkflowId(wId)
+
+            // If new, get the ID from response
+            const wId = (!currentId || currentId === 'new') ? savedData.id : currentId
+
+            if (!currentId || currentId === 'new') setWorkflowId(wId)
 
             // Optimistic Update
             setNodes(nodes.map(n => ({ ...n, data: { ...n.data, status: 'running', result: undefined, error: undefined } })))
@@ -118,7 +126,7 @@ export function useWorkflowExecution() {
 
     const handleCancelWorkflow = async () => {
         const { workflowId, nodes } = useWorkflowStore.getState()
-        if (!workflowId) return
+        if (!workflowId || workflowId === 'new') return
 
         setLoadingState('cancelling', true)
         try {
@@ -149,8 +157,11 @@ export function useWorkflowExecution() {
 
             // Save first
             const savedData = await saveWorkflow(currentId, { name: workflowName, nodes, edges })
-            const wId = currentId || savedData.id
-            if (!currentId) setWorkflowId(wId)
+
+            // If new, get the ID from response
+            const wId = (!currentId || currentId === 'new') ? savedData.id : currentId
+
+            if (!currentId || currentId === 'new') setWorkflowId(wId)
 
             // Optimistic Update: Set selected nodes to running
             setNodes(nodes.map(n =>

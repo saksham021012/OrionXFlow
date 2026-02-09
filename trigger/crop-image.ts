@@ -3,6 +3,7 @@ import ffmpeg from 'fluent-ffmpeg'
 import { promises as fs } from 'fs'
 import path from 'path'
 import os from 'os'
+import { Transloadit } from 'transloadit'
 
 export const cropImageTask = task({
     id: 'crop-image',
@@ -54,10 +55,34 @@ export const cropImageTask = task({
                     .run()
             })
 
-            // Read cropped image
-            const croppedBuffer = await fs.readFile(outputPath)
-            const base64 = croppedBuffer.toString('base64')
-            const dataUrl = `data:image/jpeg;base64,${base64}`
+            // Upload cropped image to Transloadit
+            const transloadit = new Transloadit({
+                authKey: process.env.NEXT_PUBLIC_TRANSLOADIT_KEY!,
+                authSecret: process.env.TRANSLOADIT_SECRET!,
+            })
+
+            const assembly = await transloadit.createAssembly({
+                params: {
+                    steps: {
+                        ':original': {
+                            robot: '/upload/handle',
+                        }
+                    }
+                },
+                files: {
+                    file: outputPath
+                }
+            })
+
+            const completedAssembly = await transloadit.awaitAssemblyCompletion(assembly.assembly_id!)
+
+            // Try to get file from results first, then fall back to uploads
+            const uploadedFile = completedAssembly.results?.[':original']?.[0] || completedAssembly.uploads?.[0]
+
+            if (!uploadedFile?.ssl_url) {
+                console.error('Transloadit Response:', JSON.stringify(completedAssembly, null, 2))
+                throw new Error('Transloadit upload failed: No URL returned')
+            }
 
             // Cleanup
             await fs.unlink(inputPath)
@@ -65,9 +90,10 @@ export const cropImageTask = task({
 
             return {
                 success: true,
-                result: dataUrl,
+                imageUrl: uploadedFile.ssl_url,
             }
         } catch (error: any) {
+            console.error('Crop Image Error:', error)
             return {
                 success: false,
                 error: error.message || 'Image crop failed',

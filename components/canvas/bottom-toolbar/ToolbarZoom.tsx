@@ -44,45 +44,45 @@ export function ToolbarZoom() {
     }
 
     return (
-        <div className="relative flex items-center gap-2 px-2" ref={menuRef}>
+        <div className="relative flex items-center gap-1 sm:gap-2 px-1 sm:px-2" ref={menuRef}>
             <button 
                 onClick={() => setIsZoomMenuOpen(!isZoomMenuOpen)}
-                className="flex items-center gap-1 text-xs font-medium text-white hover:bg-[#2a2a2a] py-1 px-2 rounded cursor-pointer transition-colors"
+                className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-white hover:bg-[#2a2a2a] py-1 px-1.5 sm:px-2 rounded cursor-pointer transition-colors"
             >
-                <span className="min-w-[2rem] text-right">{zoomPercentage}%</span>
-                <ChevronDown className={`w-3 h-3 text-[#6b6b6b] transition-transform ${isZoomMenuOpen ? 'rotate-180' : ''}`} />
+                <span className="min-w-[1.5rem] sm:min-w-[2rem] text-right">{zoomPercentage}%</span>
+                <ChevronDown className={`w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#6b6b6b] transition-transform ${isZoomMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Zoom Dropdown Menu */}
             {isZoomMenuOpen && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg shadow-2xl overflow-hidden py-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 sm:mb-3 w-40 sm:w-48 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg shadow-2xl overflow-hidden py-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
                     <button
                         onClick={handleZoomIn}
-                        className="w-full px-3 py-2 text-left text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
                     >
                         <span>Zoom in</span>
-                        <span className="text-[#666] group-hover:text-[#888]">Ctrl +</span>
+                        <span className="text-[#666] group-hover:text-[#888] hidden sm:inline">Ctrl +</span>
                     </button>
                     <button
                         onClick={handleZoomOut}
-                        className="w-full px-3 py-2 text-left text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
                     >
                         <span>Zoom out</span>
-                        <span className="text-[#666] group-hover:text-[#888]">Ctrl -</span>
+                        <span className="text-[#666] group-hover:text-[#888] hidden sm:inline">Ctrl -</span>
                     </button>
                     <button
                         onClick={handleZoomTo100}
-                        className="w-full px-3 py-2 text-left text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
                     >
                         <span>Zoom to 100%</span>
-                        <span className="text-[#666] group-hover:text-[#888]">Ctrl 0</span>
+                        <span className="text-[#666] group-hover:text-[#888] hidden sm:inline">Ctrl 0</span>
                     </button>
                     <button
                         onClick={handleFitView}
-                        className="w-full px-3 py-2 text-left text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs text-white hover:bg-[#2a2a2a] flex items-center justify-between group"
                     >
                         <span>Zoom to fit</span>
-                        <span className="text-[#666] group-hover:text-[#888]">Ctrl 1</span>
+                        <span className="text-[#666] group-hover:text-[#888] hidden sm:inline">Ctrl 1</span>
                     </button>
                 </div>
             )}

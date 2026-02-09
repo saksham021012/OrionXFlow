@@ -146,7 +146,7 @@ export default function WorkflowPage() {
     <ReactFlowProvider>
       <MainLayout>
         {/* Top Bar - Simplified */}
-        <div className="h-14 border-b border-[#2a2a2a] bg-[#0a0a0a] px-6 flex items-center">
+        <div className="h-12 sm:h-14 border-b border-[#2a2a2a] bg-[#0a0a0a] px-4 sm:px-6 flex items-center">
           {isEditingName ? (
             <input
               type="text"
@@ -155,11 +155,11 @@ export default function WorkflowPage() {
               onBlur={handleNameFinish}
               onKeyDown={handleNameKeyDown}
               autoFocus
-              className="text-sm font-medium text-white bg-transparent border-b border-primary outline-none min-w-[200px]"
+              className="text-xs sm:text-sm font-medium text-white bg-transparent border-b border-primary outline-none min-w-[150px] sm:min-w-[200px] w-full max-w-[300px] sm:max-w-none"
             />
           ) : (
             <h1 
-              className="text-sm font-medium text-white cursor-pointer hover:text-primary transition-colors"
+              className="text-xs sm:text-sm font-medium text-white cursor-pointer hover:text-primary transition-colors truncate max-w-[250px] sm:max-w-none"
               onClick={handleNameClick}
               title="Click to rename workflow"
             >

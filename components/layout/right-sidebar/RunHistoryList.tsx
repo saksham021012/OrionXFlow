@@ -53,9 +53,9 @@ export function RunHistoryList() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-[#2a2a2a] flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-          <Clock className="w-4 h-4" />
+      <div className="p-3 sm:p-4 border-b border-[#2a2a2a] flex items-center justify-between">
+        <h2 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5 sm:gap-2">
+          <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           History
         </h2>
         <button
@@ -64,26 +64,26 @@ export function RunHistoryList() {
           title="Refresh"
         >
           {isPolling ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
           ) : (
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           )}
         </button>
       </div>
 
       {/* Runs List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 sm:space-y-2">
         {!workflowId ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-[#a0a0a0]">Save the workflow first</p>
-            <p className="text-xs text-[#6b6b6b] mt-1">
+          <div className="text-center py-6 sm:py-8 px-4">
+            <p className="text-xs sm:text-sm text-[#a0a0a0]">Save the workflow first</p>
+            <p className="text-[10px] sm:text-xs text-[#6b6b6b] mt-1">
               History is tracked for saved workflows
             </p>
           </div>
         ) : runs.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-[#a0a0a0]">No workflow runs yet</p>
-            <p className="text-xs text-[#6b6b6b] mt-1">
+          <div className="text-center py-6 sm:py-8 px-4">
+            <p className="text-xs sm:text-sm text-[#a0a0a0]">No workflow runs yet</p>
+            <p className="text-[10px] sm:text-xs text-[#6b6b6b] mt-1">
               Execute the workflow to see history
             </p>
           </div>

@@ -28,11 +28,11 @@ export function SidebarIconBar({
   const router = useRouter()
 
   return (
-    <div className="w-12 bg-[#0a0a0a] border-r border-[#2a2a2a] flex flex-col items-center py-4 gap-2">
+    <div className="w-10 sm:w-12 bg-[#0a0a0a] border-r border-[#2a2a2a] flex flex-col items-center py-3 sm:py-4 gap-1.5 sm:gap-2">
       {/* Brand Logo */}
-      <div className="mb-2 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
-          <span className="text-black font-black text-lg select-none">O</span>
+      <div className="mb-1.5 sm:mb-2 flex items-center justify-center">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-white flex items-center justify-center">
+          <span className="text-black font-black text-base sm:text-lg select-none">O</span>
         </div>
       </div>
 
@@ -41,38 +41,38 @@ export function SidebarIconBar({
           setIsNavigating(true)
           router.push('/dashboard')
         }}
-        className={`w-8 h-8 rounded-md flex items-center justify-center transition-all ${
+        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center transition-all ${
           isExpanded
             ? 'bg-[#2a2a2a] text-white hover:bg-[#333333]'
             : 'text-[#6b6b6b] hover:text-white hover:bg-[#1a1a1a]'
         } ${isNavigating ? 'opacity-80' : ''}`}
         title="Go to Dashboard"
       >
-        {isNavigating ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <ArrowLeft className="w-4 h-4" />}
+        {isNavigating ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-primary" /> : <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
       </button>
 
       <button
         onClick={() => togglePanel('search')}
-        className={`w-8 h-8 rounded-md flex items-center justify-center transition-all ${
+        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center transition-all ${
           activePanel === 'search'
             ? 'bg-[#2a2a2a] text-white'
             : 'text-[#6b6b6b] hover:text-white hover:bg-[#1a1a1a]'
         }`}
         title="Search"
       >
-        <Search className="w-4 h-4" />
+        <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
 
       <button
         onClick={() => togglePanel('nodes')}
-        className={`w-8 h-8 rounded-md flex items-center justify-center transition-all ${
+        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center transition-all ${
           activePanel === 'nodes'
             ? 'bg-[#2a2a2a] text-white'
             : 'text-[#6b6b6b] hover:text-white hover:bg-[#1a1a1a]'
         }`}
         title="Quick Access"
       >
-        <Grid3x3 className="w-4 h-4" />
+        <Grid3x3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
     </div>
   )

@@ -84,32 +84,32 @@ export function WorkflowToolsPanel() {
 
   return (
     <div>
-      <h3 className="text-xs font-semibold text-[#a0a0a0] uppercase mb-3 tracking-wider">
+      <h3 className="text-[10px] sm:text-xs font-semibold text-[#a0a0a0] uppercase mb-2 sm:mb-3 tracking-wider">
         Tools
       </h3>
-      <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-1.5 sm:space-y-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button
             onClick={handleExport}
-            className="h-20 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex flex-col items-center justify-center gap-2"
+            className="h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2"
           >
-            <FileDown className="w-5 h-5 text-white" />
-            <span className="text-xs text-white font-medium">Export</span>
+            <FileDown className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            <span className="text-[10px] sm:text-xs text-white font-medium">Export</span>
           </button>
           <button
             onClick={handleImport}
-            className="h-20 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex flex-col items-center justify-center gap-2"
+            className="h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2"
           >
-            <FileUp className="w-5 h-5 text-white" />
-            <span className="text-xs text-white font-medium">Import</span>
+            <FileUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            <span className="text-[10px] sm:text-xs text-white font-medium">Import</span>
           </button>
         </div>
         <button
           onClick={handleLoadSample}
-          className="w-full h-20 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex flex-col items-center justify-center gap-2"
+          className="w-full h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2"
         >
-          <Folder className="w-5 h-5 text-white" />
-          <span className="text-xs text-white font-medium">Sample Workflow</span>
+          <Folder className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          <span className="text-[10px] sm:text-xs text-white font-medium">Sample Workflow</span>
         </button>
       </div>
     </div>
