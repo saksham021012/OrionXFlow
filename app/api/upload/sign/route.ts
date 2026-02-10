@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             params,
-            signature,
+            signature: `sha384:${signature}`,
         })
 
     } catch (error) {
