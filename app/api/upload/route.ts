@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         // Create the assembly with file path
         const assembly = await transloadit.createAssembly({
             params: {
-                steps,
+                steps: steps as any,
             },
             files: {
                 file: tempFilePath,
