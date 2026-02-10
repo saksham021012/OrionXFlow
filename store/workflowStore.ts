@@ -1,17 +1,10 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { Node, Edge, Connection, addEdge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange } from 'reactflow'
-
-export type NodeData = {
-    label: string
-    type: string
-    value?: any
-    result?: any
-    status?: 'idle' | 'running' | 'completed' | 'failed' | 'cancelled'
-    error?: string
-    model?: string
-    [key: string]: any
-}
+import { NodeData, HistorySnapshot } from './workflow.types'
+export type { NodeData, HistorySnapshot }
+import { createNode, updateNodeData, deleteNode } from './workflow.nodes'
+import { takeSnapshot, undo, redo } from './workflow.history'
 
 interface WorkflowState {
     nodes: Node<NodeData>[]
@@ -22,8 +15,8 @@ interface WorkflowState {
     lastRunId: string | null
 
     // History
-    past: { nodes: Node<NodeData>[]; edges: Edge[] }[]
-    future: { nodes: Node<NodeData>[]; edges: Edge[] }[]
+    past: HistorySnapshot[]
+    future: HistorySnapshot[]
 
     // Actions
     setNodes: (nodes: Node<NodeData>[]) => void
@@ -45,8 +38,6 @@ interface WorkflowState {
     undo: () => void
     redo: () => void
 }
-
-let nodeIdCounter = 0
 
 export const useWorkflowStore = create<WorkflowState>()(
     persist(
@@ -80,39 +71,19 @@ export const useWorkflowStore = create<WorkflowState>()(
 
             takeSnapshot: () => {
                 const { nodes, edges, past } = get()
-                // Limit history to 50 steps
-                const newPast = [...past, { nodes: [...nodes], edges: [...edges] }].slice(-50)
-                set({ past: newPast, future: [] })
+                set(takeSnapshot(nodes, edges, past))
             },
 
             undo: () => {
                 const { past, future, nodes, edges } = get()
-                if (past.length === 0) return
-
-                const previous = past[past.length - 1]
-                const newPast = past.slice(0, past.length - 1)
-
-                set({
-                    past: newPast,
-                    future: [{ nodes: [...nodes], edges: [...edges] }, ...future],
-                    nodes: previous.nodes,
-                    edges: previous.edges,
-                })
+                const result = undo(past, future, nodes, edges)
+                if (result) set(result)
             },
 
             redo: () => {
                 const { past, future, nodes, edges } = get()
-                if (future.length === 0) return
-
-                const next = future[0]
-                const newFuture = future.slice(1)
-
-                set({
-                    past: [...past, { nodes: [...nodes], edges: [...edges] }],
-                    future: newFuture,
-                    nodes: next.nodes,
-                    edges: next.edges,
-                })
+                const result = redo(past, future, nodes, edges)
+                if (result) set(result)
             },
 
             onConnect: (connection) => {
@@ -130,36 +101,20 @@ export const useWorkflowStore = create<WorkflowState>()(
 
             addNode: (type, position) => {
                 get().takeSnapshot()
-                const id = `node-${++nodeIdCounter}`
-                const newNode: Node<NodeData> = {
-                    id,
-                    type,
-                    position,
-                    data: {
-                        label: type.charAt(0).toUpperCase() + type.slice(1),
-                        type,
-                        status: 'idle',
-                    },
-                }
+                const newNode = createNode(type, position)
                 set({ nodes: [...get().nodes, newNode] })
             },
 
             updateNodeData: (nodeId, data) => {
                 set({
-                    nodes: get().nodes.map((node) =>
-                        node.id === nodeId
-                            ? { ...node, data: { ...node.data, ...data } }
-                            : node
-                    ),
+                    nodes: updateNodeData(get().nodes, nodeId, data),
                 })
             },
 
             deleteNode: (nodeId) => {
                 get().takeSnapshot()
-                set({
-                    nodes: get().nodes.filter((node) => node.id !== nodeId),
-                    edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
-                })
+                const { nodes, edges } = get()
+                set(deleteNode(nodes, edges, nodeId))
             },
 
             setSelectedNodes: (nodeIds) => {
@@ -188,8 +143,8 @@ export const useWorkflowStore = create<WorkflowState>()(
             }),
         }),
         {
-            name: 'workflow-storage', // name of the item in the storage (must be unique)
-            storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
+            name: 'workflow-storage',
+            storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 nodes: state.nodes,
                 edges: state.edges,
