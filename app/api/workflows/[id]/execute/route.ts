@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { ExecuteWorkflowSchema } from '@/lib/schemas'
 
 export const dynamic = 'force-dynamic'
-// import { executeWorkflow } from '@/lib/workflow-execution/workflow-orchestrator'
+import { executeWorkflow } from '@/lib/workflow-execution/workflow-orchestrator'
 import type { Node, Edge } from 'reactflow'
 
 export async function POST(
@@ -73,14 +73,8 @@ export async function POST(
             },
         })
 
-        // Execute workflow via Trigger.dev to avoid Vercel timeouts
-        const { tasks } = await import('@trigger.dev/sdk/v3')
-        await tasks.trigger('workflow-orchestrator', {
-            runId: run.id,
-            nodes,
-            edges,
-            nodesToExecute,
-        })
+        // Execute workflow asynchronously
+        executeWorkflow(run.id, nodes, edges, nodesToExecute).catch(console.error)
 
         return NextResponse.json({ runId: run.id })
     } catch (error) {
