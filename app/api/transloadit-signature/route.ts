@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
                 'encoded': {
                     use: ':original',
                     robot: '/video/encode',
-                    preset: 'mp4',        // ← changed from webm for Safari/iOS compatibility
+                    preset: 'hls-1080p',
                     ffmpeg_stack: 'v6.0.0',
                 },
             }
