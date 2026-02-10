@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useWorkflowStore } from '@/store/workflowStore'
 
 export function useWorkflowExecution() {
+    const router = useRouter()
     const [loading, setLoading] = useState({ saving: false, executing: false, cancelling: false })
     const { workflowName, workflowId, nodes, edges, setWorkflowId, setNodes, setEdges, setLastRunId } = useWorkflowStore()
 
@@ -38,7 +40,10 @@ export function useWorkflowExecution() {
             const { workflowName, nodes, edges, workflowId } = useWorkflowStore.getState()
             const result = await saveWorkflow(workflowId, { name: workflowName, nodes, edges })
 
-            if (!workflowId || workflowId === 'new') setWorkflowId(result.id)
+            if (!workflowId || workflowId === 'new') {
+                setWorkflowId(result.id)
+                router.replace(`/workflow/${result.id}`)
+            }
             alert('Workflow saved successfully!')
         } catch (error) {
             console.error(error)

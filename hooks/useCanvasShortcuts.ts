@@ -2,10 +2,12 @@ import { useEffect } from 'react'
 import { useReactFlow } from 'reactflow'
 
 import { useWorkflowStore } from '@/store/workflowStore'
+import { useWorkflowExecution } from './useWorkflowExecution'
 
 export function useCanvasShortcuts() {
     const { zoomIn, zoomOut, zoomTo, fitView } = useReactFlow()
     const { undo, redo } = useWorkflowStore()
+    const { handleSave } = useWorkflowExecution()
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -45,6 +47,11 @@ export function useCanvasShortcuts() {
                     case 'Y':
                         e.preventDefault()
                         redo()
+                        break
+                    case 's': // Ctrl + S (Save)
+                    case 'S':
+                        e.preventDefault()
+                        handleSave()
                         break
                 }
             }
