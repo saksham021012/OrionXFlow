@@ -85,9 +85,7 @@ export function useTransloadit(options: UseTransloaditOptions): UseTransloaditRe
                 }
 
                 // Polling or waiting for completion
-                // The assembly response has an assembly_url we can check if needed,
-                // but api2.transloadit.com usually returns immediately.
-                // However, processing might take time.
+
                 let assemblyData = await uploadResponse.json()
 
                 // Wait for results if they're not immediately available
