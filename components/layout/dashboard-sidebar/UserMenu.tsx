@@ -24,7 +24,7 @@ export function UserMenu() {
     const handleLogout = async () => {
         setIsLoggingOut(true)
         try {
-            await signOut()
+            await signOut({ redirectUrl: '/sign-in' })
         } catch (error) {
             console.error('Error signing out:', error)
             setIsLoggingOut(false)
