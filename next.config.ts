@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'assets.transloadit.com',
+        hostname: '**.transloadit.com',
       },
       {
         protocol: 'https',
