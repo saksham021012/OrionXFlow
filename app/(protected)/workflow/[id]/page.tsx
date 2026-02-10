@@ -23,6 +23,15 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
   // Load workflow data on mount
   useEffect(() => {
     const loadWorkflow = async () => {
+        // If the ID in the URL matches the ID in our store and we have nodes, 
+        // we can skip the fetch to provide an "instant" experience (e.g., after import)
+        const store = useWorkflowStore.getState()
+        if (id !== 'new' && store.workflowId === id && store.nodes.length > 0) {
+            setEditName(store.workflowName)
+            setLoading(false)
+            return
+        }
+
         if (id === 'new') {
             setWorkflowId('new')
             setWorkflowName('Untitled Workflow')
@@ -42,10 +51,6 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
                 setNodes(workflow.nodes || [])
                 setEdges(workflow.edges || [])
                 setEditName(workflow.name)
-            } else {
-                console.error('Failed to load workflow')
-                // Redirect to dashboard if not found
-                // router.push('/dashboard')
             }
         } catch (error) {
             console.error('Error loading workflow:', error)

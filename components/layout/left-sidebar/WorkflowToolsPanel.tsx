@@ -8,7 +8,11 @@ export function WorkflowToolsPanel() {
   const { nodes, edges, workflowName } = useWorkflowStore()
 
   const handleExport = () => {
-    const data = { nodes, edges }
+    const data = { 
+      name: workflowName,
+      nodes, 
+      edges 
+    }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -28,12 +32,44 @@ export function WorkflowToolsPanel() {
       reader.onload = (event) => {
         try {
           const data = JSON.parse(event.target?.result as string)
-          useWorkflowStore.getState().setNodes(data.nodes || [])
-          useWorkflowStore.getState().setEdges(data.edges || [])
-          alert('Workflow imported successfully!')
+          const importedNodes = data.nodes || []
+          const importedEdges = data.edges || []
+          const importedName = data.name || 'Imported Workflow'
+
+          // 1. Update store IMMEDIATELY (Instant Canvas Update)
+          const store = useWorkflowStore.getState()
+          store.takeSnapshot()
+          store.setNodes(importedNodes)
+          store.setEdges(importedEdges)
+          store.setWorkflowName(importedName)
+          // We set the ID to a temporary state 'importing' to distinguish it until DB returns
+          store.setWorkflowId('importing')
+
+          // 2. Persist to database in BACKGROUND
+          fetch('/api/workflows', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: importedName,
+              nodes: importedNodes,
+              edges: importedEdges
+            })
+          })
+          .then(async (response) => {
+            if (!response.ok) throw new Error('Background save failed')
+            const workflow = await response.json()
+            
+            // 3. Sync ID and URL without blocking UI
+            useWorkflowStore.getState().setWorkflowId(workflow.id)
+            router.replace(`/workflow/${workflow.id}`)
+          })
+          .catch(error => {
+            console.error('Failed to persist imported workflow:', error)
+          })
+
         } catch (error) {
-          console.error('Failed to import workflow:', error)
-          alert('Failed to import workflow')
+          console.error('Failed to parse import file:', error)
+          alert('Invalid workflow file format')
         }
       }
       reader.readAsText(file)
