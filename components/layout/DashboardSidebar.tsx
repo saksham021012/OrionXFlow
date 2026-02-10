@@ -60,13 +60,6 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
 
       </div>
 
-      {/* Footer / User Settings */}
-      <div className="p-3 sm:p-4 border-t border-[#2a2a2a]">
-         <div className="flex items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
-             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500"></div>
-             <span className="text-[10px] sm:text-xs text-[#666666]">Discord</span>
-         </div>
-      </div>
       </div>
     </>
   )
