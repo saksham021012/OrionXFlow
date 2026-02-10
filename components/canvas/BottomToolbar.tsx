@@ -12,7 +12,7 @@ export default function BottomToolbar({ activeTool, setActiveTool }: BottomToolb
   useCanvasShortcuts()
 
   return (
-    <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 sm:gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg sm:rounded-xl p-1 sm:p-1.5 shadow-xl z-50">
+    <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 sm:gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg sm:rounded-xl p-1 sm:p-1.5 shadow-xl z-[60]">
       <ToolbarTools activeTool={activeTool} setActiveTool={setActiveTool} />
 
       {/* Divider */}

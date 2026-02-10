@@ -11,7 +11,7 @@ export function SelectionActions() {
     if (selectedNodes.length === 0) return null
 
     return (
-        <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 bg-[#1a1a1a] border border-primary/50 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-[90vw] sm:max-w-none">
+        <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 bg-[#1a1a1a] border border-primary/50 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 shadow-2xl z-[60] animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-[90vw] sm:max-w-none">
             <span className="text-[10px] sm:text-xs font-medium text-white/70 mr-1 sm:mr-2 truncate">
                 {selectedNodes.length} node{selectedNodes.length > 1 ? 's' : ''} selected
             </span>

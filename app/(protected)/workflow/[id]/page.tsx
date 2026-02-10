@@ -143,7 +143,7 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
     <ReactFlowProvider>
       <MainLayout>
         {/* Floating Workflow Name Bubble */}
-        <div className="absolute top-3 sm:top-4 left-14 sm:left-[64px] z-50 pointer-events-none">
+        <div className="absolute top-3 sm:top-4 left-14 sm:left-[64px] xs:left-16 z-50 pointer-events-none">
           <div className="pointer-events-auto">
             {isEditingName ? (
               <div className="px-3 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#1a1a1a] border border-[#333] shadow-2xl backdrop-blur-md">
@@ -163,7 +163,7 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
                 onClick={handleNameClick}
               >
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xs sm:text-sm font-medium text-white/90 group-hover:text-white transition-colors truncate max-w-[150px] sm:max-w-none">
+                  <h1 className="text-xs sm:text-sm font-medium text-white/90 group-hover:text-white transition-colors truncate max-w-[100px] xs:max-w-[150px] sm:max-w-none">
                     {workflowName.toLowerCase()}
                   </h1>
                   {saving && (
