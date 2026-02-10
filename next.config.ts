@@ -5,7 +5,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'assets.transloadit.com',
+        hostname: '**.transloadit.com', // ** required for subdomain wildcards
+      },
+      {
+        protocol: 'https',
+        hostname: '**.tlcdn.com',       // Transloadit's CDN for processed files
       },
       {
         protocol: 'https',

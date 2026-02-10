@@ -51,23 +51,71 @@ export function useTransloadit(options: UseTransloaditOptions): UseTransloaditRe
             setError(null)
 
             try {
-                // Create FormData for server-side upload
-                const formData = new FormData()
-                formData.append('file', file)
-                formData.append('fileType', fileType)
+                // 1. Get signature from our API
+                const sigResponse = await fetch('/api/transloadit-signature', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileType }),
+                })
 
-                // Upload via server-side API route
-                const response = await fetch('/api/upload', {
+                if (!sigResponse.ok) {
+                    const errorData = await sigResponse.json()
+                    throw new Error(errorData.error || 'Failed to get upload signature')
+                }
+
+                const { params, signature } = await sigResponse.json()
+
+                // 2. Upload directly to Transloadit
+                const formData = new FormData()
+                formData.append('params', params)
+                formData.append('signature', signature)
+                formData.append('file', file)
+
+                // We use wait: true to get the results in the same request
+                // but the signature API already included the steps
+
+                const uploadResponse = await fetch('https://api2.transloadit.com/assemblies', {
                     method: 'POST',
                     body: formData,
                 })
 
-                if (!response.ok) {
-                    const errorData = await response.json()
-                    throw new Error(errorData.error || 'Upload failed')
+                if (!uploadResponse.ok) {
+                    const errorData = await uploadResponse.json()
+                    throw new Error(errorData.message || 'Upload to Transloadit failed')
                 }
 
-                const uploadResult: TransloaditUploadResult = await response.json()
+                // Polling or waiting for completion
+                // The assembly response has an assembly_url we can check if needed,
+                // but api2.transloadit.com usually returns immediately.
+                // However, processing might take time.
+                let assemblyData = await uploadResponse.json()
+
+                // Wait for results if they're not immediately available
+                if (assemblyData.ok === 'ASSEMBLY_EXECUTING') {
+                    const assemblyUrl = assemblyData.assembly_ssl_url
+                    while (assemblyData.ok === 'ASSEMBLY_EXECUTING') {
+                        await new Promise(resolve => setTimeout(resolve, 2000))
+                        const pollResponse = await fetch(assemblyUrl)
+                        assemblyData = await pollResponse.json()
+                    }
+                }
+
+                if (assemblyData.ok !== 'ASSEMBLY_COMPLETED') {
+                    throw new Error(assemblyData.message || 'Assembly failed to complete')
+                }
+
+                // 3. Extract results
+                const resultKey = fileType === 'image' ? 'optimized' : 'encoded'
+                const uploadedFile = assemblyData.results?.[resultKey]?.[0] || assemblyData.results?.[':original']?.[0]
+
+                if (!uploadedFile?.ssl_url) {
+                    throw new Error('Upload completed but no URL returned')
+                }
+
+                const uploadResult: TransloaditUploadResult = {
+                    url: uploadedFile.ssl_url,
+                    fileName: file.name
+                }
 
                 setResult(uploadResult)
                 onSuccess?.(uploadResult)
