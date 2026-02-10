@@ -1,6 +1,7 @@
-export { llmExecutionTask } from './llm-execution'
-export { cropImageTask } from './crop-image'
-export { extractFrameTask } from './extract-frame'
-export { textExecutionTask } from './text-execution'
-export { uploadImageExecutionTask } from './upload-image-execution'
-export { uploadVideoExecutionTask } from './upload-video-execution'
+// trigger/index.ts
+import "./llm-execution";
+import "./crop-image";
+import "./extract-frame";
+import "./text-execution";
+import "./upload-image-execution";
+import "./upload-video-execution";
