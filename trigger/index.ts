@@ -1,3 +1,6 @@
 export { llmExecutionTask } from './llm-execution'
 export { cropImageTask } from './crop-image'
 export { extractFrameTask } from './extract-frame'
+export { textExecutionTask } from './text-execution'
+export { uploadImageExecutionTask } from './upload-image-execution'
+export { uploadVideoExecutionTask } from './upload-video-execution'

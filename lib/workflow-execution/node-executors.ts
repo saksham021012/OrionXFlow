@@ -11,6 +11,24 @@ async function isRunCancelled(runId: string): Promise<boolean> {
     return run?.status === 'cancelled'
 }
 
+// Helper to unwrap Trigger.dev task results
+function unwrapTaskOutput(output: any): any {
+    if (output && typeof output === 'object') {
+        if (output.success === false) {
+            throw new Error(output.error || 'Task execution failed')
+        }
+        if (output.success === true) {
+            // For LLM/Text nodes, result is in .result
+            if (output.result !== undefined) return output.result
+            // For Crop node, result is in .imageUrl
+            if (output.imageUrl !== undefined) return output.imageUrl
+            // For Frame node, result is in .frameUrl
+            if (output.frameUrl !== undefined) return output.frameUrl
+        }
+    }
+    return output
+}
+
 // Poll for task completion with cancellation check
 async function pollTaskCompletion(handleId: string, runId: string) {
     let run = await runs.retrieve(handleId)
@@ -33,7 +51,7 @@ async function pollTaskCompletion(handleId: string, runId: string) {
     }
 
     if (run.status === 'COMPLETED') {
-        return run.output
+        return unwrapTaskOutput(run.output)
     } else {
         throw new Error(run.error?.message || 'Task failed')
     }
@@ -117,16 +135,6 @@ export async function executeLLMNode(
     })
 
     let result = await pollTaskCompletion(handle.id, runId)
-
-    // Handle error responses
-    if (result && typeof result === 'object' && result.success === false) {
-        throw new Error(result.error || 'LLM execution failed')
-    }
-
-    // Unwrap success wrapper
-    if (result && typeof result === 'object' && result.success === true) {
-        result = result.result
-    }
 
     return {
         result,
@@ -212,11 +220,29 @@ export async function executeNodeByType(
             return await executeCropImageNode(node, edges, outputs, runId)
         case 'extractFrame':
             return await extractFrameNode(node, edges, outputs, runId)
+        case 'text': {
+            const handle = await tasks.trigger('text-execution', { value: node.data.value })
+            const result = await pollTaskCompletion(handle.id, runId)
+            return { result, inputs: { value: node.data.value } }
+        }
+        case 'uploadImage': {
+            const handle = await tasks.trigger('upload-image-execution', { value: node.data.value })
+            const result = await pollTaskCompletion(handle.id, runId)
+            return { result, inputs: { value: node.data.value } }
+        }
+        case 'uploadVideo': {
+            const handle = await tasks.trigger('upload-video-execution', { value: node.data.value })
+            const result = await pollTaskCompletion(handle.id, runId)
+            return { result, inputs: { value: node.data.value } }
+        }
         default:
-            // For simple nodes (text, upload), just use their value
+            // Route everything else through Trigger.dev to satisfy requirement
+            const val = node.data.value
+            const handle = await tasks.trigger('text-execution', { value: val })
+            const result = await pollTaskCompletion(handle.id, runId)
             return {
-                result: node.data.value,
-                inputs: { value: node.data.value }
+                result,
+                inputs: { value: val }
             }
     }
 }

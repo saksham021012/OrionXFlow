@@ -1,0 +1,240 @@
+# OrionXFlow: Project Code Explanation
+
+This document provides a line-by-line explanation of the OrionXFlow project, focusing on the logic and TypeScript implementation.
+
+---
+
+## 1. Core Configuration & Infrastructure
+
+### [package.json](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/package.json)
+The heart of the project, defining dependencies and scripts.
+
+```json
+{
+  "name": "orionxflow",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack", // Starts dev server with Turbopack for speed.
+    "build": "prisma generate && next build", // Generates Prisma client before building the app.
+    "start": "next start", // Starts production server.
+    "lint": "next lint", // Runs ESLint for code quality.
+    "trigger:dev": "trigger dev" // Starts Trigger.dev development environment.
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.14.7", // Authentication and user management.
+    "@google/generative-ai": "^0.24.0", // Google Gemini AI integration.
+    "@prisma/client": "6.2.1", // Type-safe database client.
+    "@types/fluent-ffmpeg": "2.1.28", // Types for FFmpeg.
+    "date-fns": "^4.1.0", // Date manipulation.
+    "fluent-ffmpeg": "2.1.3", // Video processing.
+    "lucide-react": "^0.469.0", // Icon library.
+    "next": "^16.1.6", // The React framework.
+    "react": "^19.2.4", // UI library.
+    "react-dom": "^19.2.4", // React rendering.
+    "reactflow": "^11.11.4", // Node-based workflow canvas.
+    "transloadit": "^4.4.0", // Media processing and uploads.
+    "zod": "^3.24.1", // Schema validation (TypeScript-first).
+    "zustand": "^5.0.3" // State management.
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18", // CSS processing.
+    "@trigger.dev/build": "4.3.3", // Build tools for Trigger.dev background tasks.
+    "@trigger.dev/sdk": "4.3.3", // SDK for Trigger.dev.
+    "prisma": "6.2.1", // Database ORM CLI.
+    "tailwindcss": "^4.1.0", // Utility-first CSS framework.
+    "typescript": "^5" // Static typing for JavaScript.
+  }
+}
+```
+
+### [tsconfig.json](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/tsconfig.json)
+Configures TypeScript compiler settings.
+
+- **`target: "ES2017"`**: Emits modern JS.
+- **`lib: ["dom", "dom.iterable", "esnext"]`**: Includes standard browser and JS libraries.
+- **`strict: true`**: Enables all strict type-checking options for better safety.
+- **`paths: { "@/*": ["./*"] }`**: Allows clean imports using `@/components/...` instead of relative paths.
+
+### [next.config.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/next.config.ts)
+Customizes Next.js behavior.
+
+- **`images.remotePatterns`**: Safely allows loading images from external domains like Transloadit, Unsplash, and Clerk.
+- **`experimental.serverActions.bodySizeLimit: '50mb'`**: Increases the limit for data sent via Server Actions (crucial for file uploads).
+- **`proxyClientMaxBodySize: 52428800`**: Increases body size limit for API routes to match.
+
+### [middleware.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/middleware.ts)
+Handles authentication at the edge.
+
+- **`clerkMiddleware`**: Wraps the application to secure routes.
+- **`isPublicRoute`**: Defines paths accessible without login (`/sign-in`, `/sign-up`).
+- **`auth.protect()`**: Redirects unauthenticated users to the sign-in page if they try to access a protected route.
+
+### [prisma/schema.prisma](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/prisma/schema.prisma)
+Defines the database schema and relations.
+
+- **`User`**: Linked to Clerk via `clerkId`.
+- **[Workflow](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/%28protected%29/workflow/%5Bid%5D/page.tsx#13-181)**: Stores the canvas state (`nodes` and `edges` as JSON).
+- **`WorkflowRun`**: Tracks an instance of a workflow execution.
+- **[NodeExecution](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/workflow-orchestrator.ts#57-75)**: Detailed logs for each individual node's execution within a run, storing `inputs`, `outputs`, and `status`.
+
+---
+
+## 2. State Management (Zustand)
+
+### [workflowStore.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts)
+This file handles the client-side state of the workflow canvas. It uses **Zustand** with the `persist` middleware to save work to `localStorage`.
+
+#### Key Types
+- **[NodeData](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#5-15)**: Extends React Flow's node data to include custom properties like `status`, `result`, `model`, and `error`.
+
+#### The Store State
+- **`nodes` / `edges`**: The actual React Flow elements.
+- **`past` / `future`**: Arrays of snapshots for **Undo/Redo** functionality.
+- **`workflowId` / `workflowName`**: Metadata about the currently open workflow.
+
+#### Core Actions
+- **[onNodesChange](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#69-74) / [onEdgesChange](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#75-80)**: Standard React Flow handlers that update the state when nodes/edges are moved or modified.
+- **[takeSnapshot](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#81-87)**: Saves the current state to the `past` array before any destructive action (like adding/deleting nodes).
+- **[undo](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#88-102) / [redo](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#103-117)**: Moves the state between `past`, `present`, and `future` arrays.
+- **[addNode](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#131-146)**: Generates a new unique ID and adds a node with `idle` status at the specified position.
+- **[updateNodeData](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#147-156)**: A helper to update specific properties of a node without overwriting the entire object.
+- **[onConnect](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#118-130)**: Handles drawing lines between nodes, applying a consistent purple style.
+
+#### Persistence
+- The store is configured to only persist `nodes`, `edges`, `workflowId`, and `workflowName` to `localStorage`. Things like the `status` of a running node are not persisted to avoid stale UI states on reload.
+
+---
+
+## 3. Layout & Global Styles
+
+### [app/layout.tsx](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/layout.tsx)
+The entry point for the entire application UI.
+
+- **`ClerkProvider`**: Wraps the app to provide authentication context to all components.
+- **Inter Font**: Loaded via `next/font/google` and applied globally via a CSS variable (`--font-inter`).
+- **`metadata`**: Sets the browser tab title and SEO description.
+
+### [app/globals.css](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/globals.css)
+Uses **Tailwind CSS 4** with a custom theme.
+
+- **Color Palette**: A curated dark theme (`#0a0a0a` background) with purple accents (`#a855f7`).
+- **Handle Colors**: Specific variables for node connection points (purple, cyan, green, orange).
+- **React Flow Customization**:
+    - **`.react-flow`**: Adds a subtle radial grid background.
+    - **`.react-flow__node`**: Stylizes nodes with borders, shadows, and smooth transitions.
+    - **`.running` animation**: Adds a purple pulsing glow to nodes currently being executed.
+    - **Handle Styling**: Custom circular connection points that scale on hover.
+
+### [components/layout/RightSidebar.tsx](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/components/layout/RightSidebar.tsx)
+A client-side component (noted by `'use client'`) that manages the history panel.
+
+- **`useState(false)`**: Controls the collapsed/expanded state.
+- **Responsive Width**: Changes from `w-10` to `w-80` with a smooth `transition-all`.
+- **`RunHistoryList`**: Dynamically rendered only when the sidebar is expanded to optimize performance.
+
+---
+
+## 4. Feature: Dashboard
+
+### [app/(protected)/dashboard/page.tsx](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/(protected)/dashboard/page.tsx)
+The main hub for user workflows.
+
+- **Authentication**: Uses `auth()` and `currentUser()` from Clerk to ensure the user is logged in.
+- **Data Fetching**: Performs a server-side Prisma query to fetch all workflows belonging to the user, ordered by `updatedAt` desc.
+- **Dynamic Workspace Name**: Logic to derive a friendly workspace name (e.g., "Saksham's Workspace") from Clerk user data.
+- **`WorkflowGrid`**: A client component that receives the initial list of workflows to display.
+
+---
+
+## 5. Feature: Workflow Canvas
+
+### [app/(protected)/workflow/[id]/page.tsx](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/(protected)/workflow/%5Bid%5D/page.tsx)
+The editor interface for a specific workflow.
+
+- **`use(params)`**: In Next.js 15, route params are asynchronous and must be accessed via the `use()` hook.
+- **Shared State Integration**: Connects to `useWorkflowStore` to manage `nodes`, `edges`, and `workflowName`.
+- **Loading Logic**:
+    - If `id === 'new'`, it initializes an empty state.
+    - Otherwise, it fetches data from `/api/workflows/${id}`.
+- **Inline Renaming**: A "bubble" UI at the top that toggles between a `h1` and an `input` for seamless editing.
+- **[saveWorkflow](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/%28protected%29/workflow/%5Bid%5D/page.tsx#89-127)**:
+    - Serializes the JSON state of nodes and edges.
+    - Uses `fetch` to sync changes with the database via the API layer.
+    - Does a `router.replace` if a new workflow was created to update the URL with the new ID.
+
+---
+
+## 6. Feature: Workflow Editor (Canvas & Nodes)
+
+### [WorkflowCanvas.tsx](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/components/canvas/WorkflowCanvas.tsx)
+The main component that hosts the React Flow editor.
+
+- **`nodeTypes`**: Maps internal node IDs (e.g., `llm`, `text`) to their respective React components.
+- **Drag & Drop**:
+    - **`onDrop`**: Uses `screenToFlowPosition` to accurately place a newly dropped node from the sidebar onto the canvas coordinate system.
+- **Validation**:
+    - **`isValidConnection`**: Uses a helper `validateConnection` to prevent circular dependencies or incompatible port connections.
+- **Snapshots**: Calls [takeSnapshot](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#81-87) on events like `onNodeDragStart` or [onConnect](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/store/workflowStore.ts#118-130) to enable **Undo** functionality.
+
+### [BaseNode.tsx](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/components/nodes/BaseNode.tsx)
+A wrapper component that provides shared UI and functionality to ALL nodes.
+
+- **Dynamic Ports**: Automatically calculates the vertical spacing for inputs and outputs.
+- **Status UI**: Displays a badge (Running, Completed, etc.) and uses Tailwind animations (like `animate-pulse`) for active states.
+- **Actions**: Handles node deletion and inline renaming for all node types.
+
+### [LLMNode.tsx](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/components/nodes/LLMNode.tsx)
+A specialized node for calling AI models.
+
+- **Port Management**: Dynamically adds "Image/Video" input ports as requested by the user.
+- **Execution Logic**:
+    - **[handleRunModel](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/components/nodes/LLMNode.tsx#153-186)**: Triggered by the "Run" button.
+    - **Auto-Save**: Ensures the current canvas state is saved to the database *before* starting execution.
+    - **Polling**: After starting a run, it enters a `while` loop, checking `/api/workflow-runs/${runId}` every second until the status is no longer "running".
+    - **State Updates**: Updates the node's `result` or `error` in the store as the run progresses.
+
+---
+
+## 7. API & Backend Logic
+
+### [app/api/workflows/route.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/api/workflows/route.ts)
+The CRUD handler for workflow metadata.
+
+- **GET**: Retrieves all workflows for the current userId. It also has "auto-provisioning" logic: if a Clerk user exists but isn't in our Prisma DB yet, it creates the DB record on the fly.
+- **POST**: Validates the incoming body using **Zod** (`CreateWorkflowSchema`) and saves the JSON representation of nodes and edges to the database.
+
+### [app/api/workflows/[id]/execute/route.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/api/workflows/%5Bid%5D/execute/route.ts)
+The execution entry point.
+
+- **Execution Types**: Supports `full`, `selected`, or `single` node execution.
+- **WorkflowRun**: Creates a new record in the database with status `running` to track the overall progress.
+- **Asynchronous Execution**: Calls the ORCHESTRATOR and immediately returns the `runId` to the client. This allows the UI to stay responsive and poll for updates while the heavy lifting happens in the background.
+
+### [trigger/](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/trigger)
+Integration with **Trigger.dev** for long-running or resource-intensive tasks.
+
+- **[crop-image.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/trigger/crop-image.ts) / [extract-frame.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/trigger/extract-frame.ts)**: These files define tasks that run in separate, scalable worker environments. This is useful for FFmpeg operations that would otherwise block the main Next.js API thread.
+- **[llm-execution.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/trigger/llm-execution.ts)**: Handles the actual calls to Google Gemini, managing retries and rate limits.
+
+---
+
+## 8. Backend: The Orchestrator
+
+### [workflow-orchestrator.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/workflow-orchestrator.ts)
+The "brain" of the execution engine.
+
+- **[buildDependencyGraph](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/workflow-orchestrator.ts#5-19)**: Analyzes the canvas edges to create a Map where each node's ID points to its parent node IDs.
+- **[executeNode](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/workflow-orchestrator.ts#76-135) (Recursive)**:
+    - Before a node runs, it recursively calls [executeNode](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/workflow-orchestrator.ts#76-135) on all its dependencies.
+    - It uses a `nodePromises` Map to ensure each node only ever executes once, even if multiple children depend on it.
+- **Data Passing**: It maintains an `outputs` Map. When a node completes, its result is saved here. This map is then passed to subsequent nodes so they can "see" their inputs.
+- **Resilience & Cancellation**: Each step checks the database for a `cancelled` status. if found, it skips further processing to save resources.
+- **Persisting Results**: After the entire graph is processed, [updateWorkflowNodes](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/workflow-orchestrator.ts#136-159) saves the final results back into the main [Workflow](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/app/%28protected%29/workflow/%5Bid%5D/page.tsx#13-181) record. This is what you see when you reload the page.
+
+### [node-executors.ts](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/node-executors.ts)
+Bridges the orchestrator with the Trigger.dev tasks.
+
+- **[getInput](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/node-executors.ts#67-81)**: A helper function that searches the incoming edges of a node to find where its value should come from (either the connected parent node's output or the node's own default data).
+- **[extractImageUrl](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/node-executors.ts#42-66)**: A robust helper that can pull image/video URLs out of various output formats (direct strings, nested objects, result fields).
+- **Polling**: Since Trigger.dev tasks are asynchronous, this file includes polling logic ([pollTaskCompletion](file:///c:/Users/Saksham/OneDrive/Desktop/galaxyai/lib/workflow-execution/node-executors.ts#14-41)) that waits for a specific task to hit a terminal state while ensuring it respects workflow-level cancellations.
