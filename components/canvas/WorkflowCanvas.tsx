@@ -89,7 +89,7 @@ export default function WorkflowCanvas() {
   }, [setSelectedNodes])
 
   return (
-    <div className="h-full w-full relative" ref={reactFlowWrapper}>
+    <div className="h-full w-full relative z-0" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -106,8 +106,8 @@ export default function WorkflowCanvas() {
         className="bg-background"
         snapToGrid={false}
         nodesDraggable={true} 
-        panOnDrag={activeTool === 'hand'}
-        selectionOnDrag={activeTool === 'select'}
+        panOnDrag={activeTool === 'hand' || (typeof window !== 'undefined' && window.innerWidth < 640)} // Always pan on drag for mobile
+        selectionOnDrag={activeTool === 'select' && (typeof window !== 'undefined' && window.innerWidth >= 640)}
         panOnScroll={true}
         zoomOnScroll={true}
         nodesConnectable={true}
@@ -115,6 +115,9 @@ export default function WorkflowCanvas() {
         minZoom={0.1}
         proOptions={{ hideAttribution: true }}
         deleteKeyCode={['Backspace', 'Delete']}
+        // Improve mobile touch performance
+        zoomOnPinch={true}
+        panOnScrollMode={'free' as any}
       >
         <Background
           variant={BackgroundVariant.Dots}

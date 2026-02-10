@@ -6,13 +6,31 @@ import { usePathname } from 'next/navigation'
 import { UserMenu } from './dashboard-sidebar/UserMenu'
 import { CreateWorkflowButton } from './dashboard-sidebar/CreateWorkflowButton'
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
   const pathname = usePathname()
 
   const isActive = (path: string) => pathname === path
 
   return (
-    <div className="w-48 sm:w-56 md:w-64 bg-[#0a0a0a] border-r border-[#2a2a2a] flex flex-col h-full">
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <div className={`
+        fixed h-full z-[101] lg:relative lg:z-0
+        w-64 bg-[#0a0a0a] border-r border-[#2a2a2a] flex flex-col transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
       {/* User Profile Section */}
       <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2">
          <UserMenu />
@@ -49,6 +67,7 @@ export default function DashboardSidebar() {
              <span className="text-[10px] sm:text-xs text-[#666666]">Discord</span>
          </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
