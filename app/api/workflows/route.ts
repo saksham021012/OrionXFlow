@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { CreateWorkflowSchema } from '@/lib/schemas'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
     try {
         const { userId } = await auth()

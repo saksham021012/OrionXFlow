@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { ExecuteWorkflowSchema } from '@/lib/schemas'
+
+export const dynamic = 'force-dynamic'
 import { executeWorkflow } from '@/lib/workflow-execution/workflow-orchestrator'
 import type { Node, Edge } from 'reactflow'
 
