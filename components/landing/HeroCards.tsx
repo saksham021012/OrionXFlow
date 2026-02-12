@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Handle, Position } from "reactflow";
 
 export const Card3D = () => (
-    <div className="bg-[#d8dce6] p-2 sm:p-3 lg:p-4 w-[110px] sm:w-[150px] lg:w-[200px] cursor-grab active:cursor-grabbing border-0">
+    <div className="bg-[#d8dce6] p-2 sm:p-3 lg:p-4 w-[110px] sm:w-[150px] lg:w-[200px] cursor-grab active:cursor-grabbing  border-0">
         <div className="flex justify-between mb-1 sm:mb-2">
             <span className="text-[6px] sm:text-[8px] lg:text-[10px] text-[#555] uppercase tracking-wide font-medium">
                 3D

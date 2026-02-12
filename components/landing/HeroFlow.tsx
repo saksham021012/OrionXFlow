@@ -182,7 +182,7 @@ export default function HeroFlow() {
     );
 
     return (
-        <div className="w-full h-full relative">
+        <div className="w-full h-full relative pl-30">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

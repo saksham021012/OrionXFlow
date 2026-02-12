@@ -22,9 +22,9 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section
-        className="relative w-full overflow-hidden"
+        className="relative w-full overflow-hidden pb-40"
         style={{
-          minHeight: "100vh",
+          minHeight: "1100px",
           backgroundColor: "#eff1f5",
           backgroundImage:
             "linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px)",
@@ -59,7 +59,7 @@ export default function LandingPage() {
 
         {/* React Flow Canvas */}
         <div
-          className="absolute left-0 right-0 top-0 bottom-0 overflow-visible mt-[450px] sm:mt-[400px] lg:mt-[300px]"
+          className="absolute left-0 right-0 top-0 bottom-24 overflow-visible mt-[450px] sm:mt-[400px] lg:mt-[300px]"
           style={{ zIndex: 10 }}
         >
           <ReactFlowProvider>
