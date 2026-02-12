@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 const ControlOutcome = () => {
     const [selectedLayer, setSelectedLayer] = useState('TEXT LAYER');
@@ -98,52 +99,51 @@ const ControlOutcome = () => {
                     <div className="flex-1 bg-[#2a2a2a] flex items-center justify-center p-12">
                         <div className="relative w-full h-full rounded-lg overflow-hidden bg-[#1a1a1a]">
                             {/* Layer 1: UI Desktop Background */}
-                            <img
+                            <Image
                                 src="/weavy/section2-control/ui-desktop.avif"
                                 alt="UI Desktop background"
-                                className="absolute inset-0 w-full h-full object-cover"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                }}
+                                fill
+                                className="object-cover"
+                                priority
                             />
 
                             {/* Layer 2: Spaceship - Full width/height centered */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <img
+                            <div className="absolute inset-0">
+                                <Image
                                     src="/weavy/section2-control/spaceship.avif"
                                     alt="Spaceship"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                                    fill
+                                    className="object-cover"
                                 />
                             </div>
 
                             {/* Layer 3: Astronaut */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <img
+                            <div className="absolute inset-0">
+                                <Image
                                     src="/weavy/section2-control/astro.avif"
                                     alt="Astronaut"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                                    fill
+                                    className="object-cover"
                                 />
                             </div>
 
                             {/* Layer 4: Text Layers (text-in-astro) */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <img
+                            <div className="absolute inset-0">
+                                <Image
                                     src="/weavy/section2-control/text-in-astro.svg"
                                     alt="Text in Astronaut"
-                                    className="w-auto h-auto object-contain"
-                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                                    fill
+                                    className="object-contain"
                                 />
                             </div>
 
                             {/* Layer 5: Walkie Talkie - Topmost */}
-                            <div className="absolute top-[20%] left-[25%]">
-                                <img
+                            <div className="absolute top-[20%] left-[25%] w-[120px] h-[120px]">
+                                <Image
                                     src="/weavy/section2-control/phone.avif"
                                     alt="Walkie Talkie"
-                                    className="w-[120px] h-auto object-contain"
-                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                                    fill
+                                    className="object-contain"
                                 />
                             </div>
                         </div>

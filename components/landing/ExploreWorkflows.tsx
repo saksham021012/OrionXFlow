@@ -86,6 +86,7 @@ export default function ExploreWorkflows() {
                                     src={card.image}
                                     alt={card.title}
                                     fill
+                                    sizes="(max-width: 768px) 100vw, 420px"
                                     className="object-cover"
                                 />
                                 <div className="absolute bottom-4 left-4 pointer-events-auto">

@@ -54,6 +54,7 @@ export default function ToolsSection() {
                         src={activeTool ? `/weavy/section1-tools/${tools.find(t => t.name === activeTool)?.image}` : "/weavy/section1-tools/vase-default.avif"}
                         alt="Central Vase"
                         fill
+                        sizes="(max-width: 1200px) 100vw, 1100px"
                         className="object-contain drop-shadow-2xl transition-opacity duration-300"
                         priority
                     />

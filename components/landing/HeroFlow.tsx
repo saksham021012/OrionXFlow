@@ -30,6 +30,7 @@ const Card3D = () => (
                 alt="3D"
                 width={180}
                 height={230}
+                priority
                 className="object-contain w-full h-full"
                 draggable={false}
             />
@@ -55,6 +56,7 @@ const ColorRefCard = () => (
                 alt="Color"
                 width={180}
                 height={110}
+                priority
                 className="object-contain w-full h-full"
                 draggable={false}
             />
@@ -81,6 +83,7 @@ const StableDiffusionCard = () => (
                 alt="Stable Diffusion"
                 width={320}
                 height={470}
+                priority
                 className="object-contain w-full h-full"
                 draggable={false}
             />
