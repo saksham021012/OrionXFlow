@@ -135,7 +135,7 @@ export async function executeNode(
 
 // Update workflow nodes with execution results
 async function updateWorkflowNodes(
-    runId: string,
+    workflowId: string,
     nodes: Node[],
     outputs: Map<string, any>
 ) {
@@ -147,14 +147,11 @@ async function updateWorkflowNodes(
         return node
     })
 
-    const workflowRun = await prisma.workflowRun.findUnique({ where: { id: runId } })
-    if (workflowRun) {
-        await prisma.workflow.update({
-            where: { id: workflowRun.workflowId },
-            data: { nodes: updatedNodes as any },
-        })
-        console.log('Updated workflow nodes with results')
-    }
+    await prisma.workflow.update({
+        where: { id: workflowId },
+        data: { nodes: updatedNodes as any },
+    })
+    console.log('Updated workflow nodes with results')
 }
 
 // Determine final run status
@@ -173,6 +170,16 @@ export async function executeWorkflow(
     nodesToExecute: string[]
 ) {
     try {
+        // Fetch workflowId once at the start to avoid redundant queries later
+        const workflowRun = await prisma.workflowRun.findUnique({
+            where: { id: runId },
+            select: { workflowId: true }
+        })
+
+        if (!workflowRun) {
+            throw new Error('Workflow run not found')
+        }
+
         // If specific nodes are selected, we must also execute their upstream dependencies
         // to ensure they have the data they need.
         const allNodesToExecute = new Set(nodesToExecute)
@@ -206,15 +213,19 @@ export async function executeWorkflow(
             )
         )
 
-        // Update workflow with results
-        await updateWorkflowNodes(runId, nodes, outputs)
+        console.log(`[DEBUG] All nodes finished executing. Updating run status...`)
 
-        // Determine and update final status
+        // Immediately update run status (before updating workflow nodes)
+        // This ensures the history sidebar shows the correct status ASAP
         const status = await determineRunStatus(runId)
         await prisma.workflowRun.update({
             where: { id: runId },
             data: { status, completedAt: new Date() },
         })
+        console.log(`[DEBUG] Run status updated to: ${status}`)
+
+        // Update workflow nodes with results (non-blocking for status visibility)
+        await updateWorkflowNodes(workflowRun.workflowId, nodes, outputs)
     } catch (error: any) {
         const isCancelled = error.message === 'Workflow run cancelled'
 

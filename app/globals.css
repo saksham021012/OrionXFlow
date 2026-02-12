@@ -58,12 +58,12 @@
   --radius-lg: 0.5rem;
   
   /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Dmsans', Arial, sans-serif;
 }
 
 @layer base {
   * {
-    border-color: var(--color-border);
+    border-color: transparent;
   }
   
   body {
@@ -84,35 +84,24 @@
 }
 
 /* React Flow custom styles - Weavy.ai Design */
-.react-flow {
-  background-color: var(--color-background);
-  background-image: radial-gradient(circle, #2a2a2a 1px, transparent 1px);
-  background-size: 20px 20px;
-}
 
 .react-flow__node {
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg-secondary);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 
-              0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  border-radius: 1rem;
+  border: none !important;
+  background-color: transparent;
+  box-shadow: none;
+  overflow: hidden;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.react-flow__node:hover {
-  border-color: var(--color-border-default);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 
-              0 4px 6px -2px rgba(0, 0, 0, 0.3);
+.react-flow__node > div {
+  border-radius: 1rem;
 }
 
-.react-flow__node.selected {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
-}
+
 
 .react-flow__node.running {
   animation: pulse-glow 2s ease-in-out infinite;
-  border-color: var(--color-primary);
 }
 
 @keyframes pulse-glow {
@@ -205,5 +194,3 @@
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
 }
-
-

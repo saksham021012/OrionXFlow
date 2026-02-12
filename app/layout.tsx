@@ -1,11 +1,19 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, DM_Sans } from 'next/font/google'
+
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+})
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'], // Add weights you need
+  variable: '--font-dm-sans',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
