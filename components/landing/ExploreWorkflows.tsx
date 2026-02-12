@@ -48,50 +48,50 @@ export default function ExploreWorkflows() {
     });
 
     return (
-        <section className="bg-[#252525] text-white py-20 px-12 overflow-hidden">
-            <h2 className="text-6xl md:text-7xl ml-50 lg:text-8xl font-normal leading-none mb-8">
+        <section className="bg-[#252525] text-white py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-12 overflow-hidden">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal leading-none mb-6 sm:mb-8 ml-0 sm:ml-8 lg:ml-12">
                 Explore Our
                 <br />
                 Workflows
             </h2>
-            <p className="text-white text-lg max-w-lg mb-12 ml-50 leading-relaxed">
+            <p className="text-white text-base sm:text-lg max-w-lg mb-8 sm:mb-10 lg:mb-12 ml-0 sm:ml-8 lg:ml-12 leading-relaxed">
                 From multi-layer compositing to matte manipulation, Nodefy keeps up
                 with your creativity with all the editing tools you recognize and rely
                 on.
             </p>
 
             {/* Draggable Cards Section */}
-            <div className="relative -mx-12 cursor-grab active:cursor-grabbing">
+            <div className="relative -mx-4 sm:-mx-6 lg:-mx-12 cursor-grab active:cursor-grabbing">
                 <motion.div
                     ref={carouselRef}
                     drag="x"
                     style={{ x }}
                     dragElastic={0} // Prevents "bouncing" against virtual boundaries
-                    className="flex gap-6 px-12"
+                    className="flex gap-4 sm:gap-6 px-4 sm:px-6 lg:px-12"
                 >
                     {tripleCards.map((card, index) => (
                         <div
                             key={`${card.title}-${index}`}
-                            className="min-w-[420px] flex-shrink-0"
+                            className="min-w-[280px] sm:min-w-[340px] md:min-w-[380px] lg:min-w-[420px] flex-shrink-0"
                         >
-                            <h3 className="text-xl font-normal mb-4">
+                            <h3 className="text-lg sm:text-xl font-normal mb-3 sm:mb-4">
                                 {card.highlight ? (
                                     <span className="text-[#e2ff66]">{card.title}</span>
                                 ) : (
                                     card.title
                                 )}
                             </h3>
-                            <div className="relative h-[250px] rounded-xl overflow-hidden pointer-events-none">
+                            <div className="relative h-[180px] sm:h-[220px] lg:h-[250px] rounded-lg sm:rounded-xl overflow-hidden pointer-events-none">
                                 <Image
                                     src={card.image}
                                     alt={card.title}
                                     fill
-                                    sizes="(max-width: 768px) 100vw, 420px"
+                                    sizes="(max-width: 640px) 280px, (max-width: 768px) 340px, (max-width: 1024px) 380px, 420px"
                                     className="object-cover"
                                 />
-                                <div className="absolute bottom-4 left-4 pointer-events-auto">
+                                <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 pointer-events-auto">
                                     <Link href="/sign-up">
-                                        <span className="bg-[#e2ff66] text-black px-4 py-2 rounded-lg font-semibold text-sm cursor-pointer">
+                                        <span className="bg-[#e2ff66] text-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm cursor-pointer inline-block">
                                             Try
                                         </span>
                                     </Link>

@@ -20,7 +20,7 @@ const aiModels = [
     { name: "Minimax image 01", highlighted: false },
     { name: "Bria", highlighted: false },
 ];
- 
+
 // Background images for the sticky section
 const bgImages = [
     "/background/GPTimg1.avif",
@@ -75,7 +75,25 @@ export default function StickyModels() {
         Math.floor(scrollProgress * aiModels.length)
     );
 
-    const itemHeight = 90;
+    // Responsive item heights
+    const getItemHeight = () => {
+        if (typeof window === 'undefined') return 90;
+        const width = window.innerWidth;
+        if (width < 640) return 50; // mobile
+        if (width < 768) return 60; // small tablet
+        if (width < 1024) return 70; // tablet
+        return 90; // desktop
+    };
+
+    const [itemHeight, setItemHeight] = useState(90);
+
+    useEffect(() => {
+        const updateHeight = () => setItemHeight(getItemHeight());
+        updateHeight();
+        window.addEventListener('resize', updateHeight);
+        return () => window.removeEventListener('resize', updateHeight);
+    }, []);
+
     const totalListHeight = aiModels.length * itemHeight;
     const modelListOffset = scrollProgress * totalListHeight;
 
@@ -107,22 +125,24 @@ export default function StickyModels() {
 
                 <div className="absolute inset-0 bg-black/40" />
 
-                <div className="relative h-full flex items-start pt-32 px-8 md:px-16 lg:px-24 gap-20">
-                    <div className="w-2/5">
-                        <h2 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-normal text-white leading-[1.1] mb-6">
+                <div className="relative h-full flex flex-col lg:flex-row items-start pt-16 sm:pt-20 md:pt-24 lg:pt-32 px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 gap-8 sm:gap-12 lg:gap-20">
+                    {/* Left content */}
+                    <div className="w-full lg:w-2/5">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-normal text-white leading-[1.1] mb-4 sm:mb-6">
                             Use all AI<br />
                             models,<br />
                             together at<br />
                             last
                         </h2>
-                        <p className="text-white/70 text-sm md:text-base max-w-md leading-relaxed">
+                        <p className="text-white/70 text-xs sm:text-sm md:text-base max-w-md leading-relaxed">
                             AI models and professional editing tools in one node-based
                             platform. Turn creative vision into scalable workflows without
                             compromising quality.
                         </p>
                     </div>
 
-                    <div className="w-3/5 overflow-hidden">
+                    {/* Right content - AI models list */}
+                    <div className="w-full lg:w-3/5 overflow-hidden flex-1 lg:flex-initial">
                         <div
                             className="transition-transform duration-200 ease-out"
                             style={{
@@ -132,10 +152,13 @@ export default function StickyModels() {
                             {aiModels.map((model, index) => (
                                 <div
                                     key={model.name}
-                                    className={`text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal leading-[1.2] transition-all duration-300 ${index === highlightedModelIndex
+                                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-normal leading-[1.2] transition-all duration-300 ${index === highlightedModelIndex
                                             ? "text-[#e2ff66]"
                                             : "text-white"
                                         }`}
+                                    style={{
+                                        height: `${itemHeight}px`,
+                                    }}
                                 >
                                     {model.name}
                                 </div>

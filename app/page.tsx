@@ -22,31 +22,31 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section
-        className="relative w-full ml-15"
+        className="relative w-full overflow-hidden"
         style={{
-          minHeight: "950px",
-          backgroundColor: "#eff1f5", // Cool gray/off-white match
+          minHeight: "100vh",
+          backgroundColor: "#eff1f5",
           backgroundImage:
             "linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px)",
-          backgroundSize: "20px 20px", // Larger grid spacing
+          backgroundSize: "20px 20px",
         }}
       >
         {/* Headline */}
-        <div className="w-full max-w-[1600px] mx-auto px-6 pt-24 pb-12 relative z-[100] pointer-events-none">
-          <div className="flex gap-18">
+        <div className="w-full max-w-[1600px] mx-auto px-6 sm:px-10 md:px-16 pt-24 pb-12 relative z-100! pointer-events-none">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-18">
             {/* Left Column */}
-            <div className="">
-              <span className="block text-[68.62px] leading-[0.9] tracking-tight font-bold text-black ml-10">
+            <div className="lg:w-1/3">
+              <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-[68.62px] leading-[0.9] tracking-tight font-bold text-black">
                 OrionXFlow
               </span>
             </div>
 
             {/* Right Column */}
-            <div className="">
-              <span className="block text-[68.62px] leading-[0.9] tracking-tight font-medium text-black mb-6">
+            <div className="lg:w-2/3">
+              <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-[68.62px] leading-[0.9] tracking-tight font-medium text-black mb-6">
                 Artistic Intelligence
               </span>
-              <p className="text-lg md:text-xl text-[#444] leading-relaxed max-w-lg">
+              <p className="text-base sm:text-lg md:text-xl text-[#444] leading-relaxed max-w-lg">
                 Turn your creative vision into scalable workflows.
                 <br />
                 Access all AI models and professional editing tools
@@ -59,7 +59,7 @@ export default function LandingPage() {
 
         {/* React Flow Canvas */}
         <div
-          className="absolute left-0 right-0 top-0 bottom-0 overflow-visible mt-[300px] "
+          className="absolute left-0 right-0 top-0 bottom-0 overflow-visible mt-[450px] sm:mt-[400px] lg:mt-[300px]"
           style={{ zIndex: 10 }}
         >
           <ReactFlowProvider>

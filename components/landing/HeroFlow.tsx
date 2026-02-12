@@ -1,217 +1,26 @@
 'use client';
 
-import Image from "next/image";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ReactFlow,
     Node,
     Edge,
     useNodesState,
     useEdgesState,
-    Handle,
-    Position,
     ConnectionLineType,
     NodeChange,
+    useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
-
-// Custom nodes for React Flow
-const Card3D = () => (
-    <div className="bg-[#d8dce6] p-4 w-[200px] cursor-grab active:cursor-grabbing border-0">
-        <div className="flex justify-between mb-2">
-            <span className="text-[10px] text-[#555] uppercase tracking-wide font-medium">
-                3D
-            </span>
-            <span className="text-[10px] text-[#888]">RODIN 2.0</span>
-        </div>
-        <div className="h-[240px] overflow-hidden bg-[#e8e5e0]">
-            <Image
-                src="/images/3d_card.avif"
-                alt="3D"
-                width={180}
-                height={230}
-                priority
-                className="object-contain w-full h-full"
-                draggable={false}
-            />
-        </div>
-        <Handle
-            type="source"
-            position={Position.Right}
-            className="!bg-[#aaa] !w-3 !h-3 !border-0"
-        />
-    </div>
-);
-
-const ColorRefCard = () => (
-    <div className="p-4 w-[200px] bg-[#4a7aa8] cursor-grab active:cursor-grabbing border-0">
-        <div className="mb-2">
-            <span className="text-[10px] text-white uppercase tracking-wide font-medium">
-                Color Reference
-            </span>
-        </div>
-        <div className="h-[120px] overflow-hidden">
-            <Image
-                src="/images/hero_mobile.avif"
-                alt="Color"
-                width={180}
-                height={110}
-                priority
-                className="object-contain w-full h-full"
-                draggable={false}
-            />
-        </div>
-        <Handle
-            type="source"
-            position={Position.Right}
-            className="!bg-[#aaa] !w-3 !h-3 !border-0"
-        />
-    </div>
-);
-
-const StableDiffusionCard = () => (
-    <div className="bg-[#e8e4dc] p-4 w-[340px] cursor-grab active:cursor-grabbing border-0">
-        <div className="flex justify-between mb-2">
-            <span className="text-[10px] text-[#555] uppercase tracking-wide font-medium">
-                Image
-            </span>
-            <span className="text-[10px] text-[#888]">STABLE DIFFUSION</span>
-        </div>
-        <div className="h-[480px] overflow-hidden">
-            <Image
-                src="/images/STABLE_DIFFUSION.avif"
-                alt="Stable Diffusion"
-                width={320}
-                height={470}
-                priority
-                className="object-contain w-full h-full"
-                draggable={false}
-            />
-        </div>
-        <Handle
-            type="target"
-            position={Position.Left}
-            id="left-top"
-            className="!bg-[#aaa] !w-3 !h-3 !border-0 !top-[30%]"
-        />
-        <Handle
-            type="target"
-            position={Position.Left}
-            id="left-bottom"
-            className="!bg-[#aaa] !w-3 !h-3 !border-0 !top-[70%]"
-        />
-        <Handle
-            type="source"
-            position={Position.Right}
-            id="right-top"
-            className="!bg-[#aaa] !w-3 !h-3 !border-0 !top-[30%]"
-        />
-        <Handle
-            type="source"
-            position={Position.Right}
-            id="right-bottom"
-            className="!bg-[#aaa] !w-3 !h-3 !border-0 !top-[70%]"
-        />
-    </div>
-);
-
-const TextCard = () => (
-    <div className="bg-white p-5 w-[190px] cursor-grab active:cursor-grabbing border-0">
-        <div className="mb-3">
-            <span className="text-[10px] text-[#555] uppercase tracking-wide font-medium">
-                Text
-            </span>
-        </div>
-        <p className="text-[10px] text-[#444] leading-relaxed">
-            A Great-Tailed Grackle bird is flying from the background and settling on
-            the model&apos;s shoulder slowly and barely moves. The model looks at the
-            camera, then bird flies away. cinematic.
-        </p>
-        <Handle
-            type="target"
-            position={Position.Left}
-            className="!bg-[#aaa] !w-3 !h-3 !border-0"
-        />
-        <Handle
-            type="source"
-            position={Position.Right}
-            id="right"
-            className="!bg-[#aaa] !w-3 !h-3 !border-0"
-        />
-    </div>
-);
-
-const FluxCard = () => (
-    <div className="bg-[#f0ede4] p-4 w-[220px] cursor-grab active:cursor-grabbing border-0">
-        <div className="flex justify-between mb-2">
-            <span className="text-[10px] text-[#555] uppercase tracking-wide font-medium">
-                Image
-            </span>
-            <span className="text-[10px] text-[#888]">FLUX PRO 1.1</span>
-        </div>
-        <div className="h-[200px] overflow-hidden">
-            <Image
-                src="/images/bird_desktop.avif"
-                alt="Flux Pro Bird"
-                width={200}
-                height={190}
-                className="object-cover w-full h-full"
-                draggable={false}
-            />
-        </div>
-        <Handle
-            type="target"
-            position={Position.Top}
-            className="!bg-[#aaa] !w-3 !h-3 !border-0"
-        />
-        <Handle
-            type="source"
-            position={Position.Right}
-            className="!bg-[#aaa] !w-3 !h-3 !border-0"
-        />
-    </div>
-);
-
-const VideoCard = () => (
-    <div className="bg-[#f5f0e8] p-4 w-[340px] cursor-grab active:cursor-grabbing border-0">
-        <div className="flex justify-between mb-2">
-            <span className="text-[10px] text-[#555] uppercase tracking-wide font-medium">
-                Video
-            </span>
-            <span className="text-[10px] text-[#888]">MINIMAX VIDEO</span>
-        </div>
-        <div className="h-[480px] overflow-hidden">
-            <Image
-                src="/images/minimax.png"
-                alt="Minimax Video"
-                width={320}
-                height={470}
-                className="object-contain w-full h-full"
-                draggable={false}
-            />
-        </div>
-        <Handle
-            type="target"
-            position={Position.Left}
-            id="left-top"
-            className="!bg-[#aaa] !w-3 !h-3 !border-0 !top-[30%]"
-        />
-        <Handle
-            type="target"
-            position={Position.Left}
-            id="left-bottom"
-            className="!bg-[#aaa] !w-3 !h-3 !border-0 !top-[70%]"
-        />
-    </div>
-);
+import * as Cards from "./HeroCards";
 
 const nodeTypes = {
-    card3d: Card3D,
-    colorRef: ColorRefCard,
-    stableDiffusion: StableDiffusionCard,
-    textCard: TextCard,
-    fluxCard: FluxCard,
-    videoCard: VideoCard,
+    card3d: Cards.Card3D,
+    colorRef: Cards.ColorRefCard,
+    stableDiffusion: Cards.StableDiffusionCard,
+    textCard: Cards.TextCard,
+    fluxCard: Cards.FluxCard,
+    videoCard: Cards.VideoCard,
 };
 
 const initialNodes: Node[] = [
@@ -286,38 +95,82 @@ const initialEdges: Edge[] = [
     },
 ];
 
-// Node dimensions for boundary calculations
-const NODE_DIMENSIONS: Record<string, { width: number; height: number }> = {
-    "3d": { width: 200, height: 304 }, // padding + content
-    "color": { width: 200, height: 184 },
-    "stable": { width: 340, height: 544 },
-    "text": { width: 190, height: 150 },
-    "flux": { width: 220, height: 264 },
-    "video": { width: 340, height: 544 },
+// Responsive node dimensions
+const getResponsiveDimensions = (width: number): Record<string, { width: number; height: number }> => {
+    const isMobile = width < 640;
+    const isTablet = width >= 640 && width < 1024;
+
+    return {
+        "3d": { width: isMobile ? 110 : isTablet ? 150 : 200, height: isMobile ? 160 : isTablet ? 230 : 304 },
+        "color": { width: isMobile ? 110 : isTablet ? 150 : 200, height: isMobile ? 100 : isTablet ? 140 : 184 },
+        "stable": { width: isMobile ? 180 : isTablet ? 260 : 340, height: isMobile ? 280 : isTablet ? 420 : 544 },
+        "text": { width: isMobile ? 100 : isTablet ? 140 : 190, height: isMobile ? 100 : isTablet ? 120 : 150 },
+        "flux": { width: isMobile ? 110 : isTablet ? 160 : 220, height: isMobile ? 130 : isTablet ? 190 : 264 },
+        "video": { width: isMobile ? 180 : isTablet ? 260 : 340, height: isMobile ? 280 : isTablet ? 420 : 544 },
+    };
 };
 
-const HERO_SECTION_HEIGHT = 900; // Match the container height
-
 export default function HeroFlow() {
-    const [nodes, , onNodesChange] = useNodesState(initialNodes);
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges] = useEdgesState(initialEdges);
+    const [containerWidth, setContainerWidth] = useState(1400);
+    const { setViewport } = useReactFlow();
+
+    // Handle window resize
+    useEffect(() => {
+        const updateLayout = () => {
+            const width = window.innerWidth;
+            setContainerWidth(width);
+
+            // Adjust zoom and position based on screen width
+            if (width < 640) {
+                setViewport({ x: 10, y: 0, zoom: 0.45 }, { duration: 0 });
+            } else if (width < 1024) {
+                setViewport({ x: 20, y: 0, zoom: 0.7 }, { duration: 0 });
+            } else {
+                setViewport({ x: 0, y: 0, zoom: 1.0 }, { duration: 0 });
+            }
+
+            // Update initial positions for mobile if needed
+            if (width < 640) {
+                setNodes((nds) => nds.map((node) => {
+                    if (node.id === "3d") return { ...node, position: { x: 10, y: 20 } };
+                    if (node.id === "color") return { ...node, position: { x: 10, y: 200 } };
+                    if (node.id === "stable") return { ...node, position: { x: 140, y: 50 } };
+                    if (node.id === "text") return { ...node, position: { x: 340, y: 20 } };
+                    if (node.id === "flux") return { ...node, position: { x: 340, y: 150 } };
+                    if (node.id === "video") return { ...node, position: { x: 470, y: 50 } };
+                    return node;
+                }));
+            } else {
+                setNodes(initialNodes);
+            }
+        };
+
+        updateLayout();
+        window.addEventListener("resize", updateLayout);
+        return () => window.removeEventListener("resize", updateLayout);
+    }, [setViewport, setNodes]);
 
     // Custom handler to clamp node positions within bounds
     const handleNodesChange = useCallback(
         (changes: NodeChange[]) => {
             const clampedChanges = changes.map((change) => {
-                // Only process position changes with dragging flag
                 if (change.type === "position" && change.dragging && change.position) {
                     const node = nodes.find((n) => n.id === change.id);
                     if (!node) return change;
 
-                    const nodeDimensions = NODE_DIMENSIONS[change.id] || { width: 200, height: 300 };
+                    const dimensions = getResponsiveDimensions(containerWidth)[change.id] || { width: 200, height: 300 };
+
+                    // Allow some overflow for better feel, or strict clamping
+                    const maxX = Math.max(1400, containerWidth * 1.5); // Allow dragging beyond window width if zoomed
+                    const maxY = 1000;
 
                     return {
                         ...change,
                         position: {
-                            x: Math.max(0, Math.min(1400 - nodeDimensions.width, change.position.x)),
-                            y: Math.max(0, Math.min(HERO_SECTION_HEIGHT - nodeDimensions.height, change.position.y)),
+                            x: Math.max(-100, Math.min(maxX, change.position.x)),
+                            y: Math.max(-50, Math.min(maxY, change.position.y)),
                         },
                     };
                 }
@@ -325,11 +178,11 @@ export default function HeroFlow() {
             });
             onNodesChange(clampedChanges);
         },
-        [nodes, onNodesChange]
+        [nodes, onNodesChange, containerWidth]
     );
 
     return (
-        <div className="w-full h-[900px] relative">
+        <div className="w-full h-full relative">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -340,8 +193,7 @@ export default function HeroFlow() {
                     type: "default",
                     style: {},
                 }}
-                defaultViewport={{ x: 0, y: 0, zoom: 1.1 }}
-                panOnDrag={false}
+                panOnDrag={true}
                 panOnScroll={false}
                 zoomOnScroll={false}
                 zoomOnPinch={false}
@@ -352,8 +204,8 @@ export default function HeroFlow() {
                 elementsSelectable={true}
                 proOptions={{ hideAttribution: true }}
                 className="!bg-transparent !bg-none"
-                minZoom={1}
-                maxZoom={1}
+                minZoom={0.2}
+                maxZoom={2}
                 autoPanOnNodeDrag={false}
             />
         </div>
