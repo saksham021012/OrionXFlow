@@ -5,15 +5,19 @@ import { useRouter } from 'next/navigation'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { useState } from 'react'
 
-export function WorkflowToolsPanel() {
+interface WorkflowToolsPanelProps {
+  onPreparingChange?: (isPreparing: boolean) => void
+}
+
+export function WorkflowToolsPanel({ onPreparingChange }: WorkflowToolsPanelProps) {
   const { nodes, edges, workflowName } = useWorkflowStore()
   const [sampleUploading, setSampleUploading] = useState(false)
 
   const handleExport = () => {
-    const data = { 
+    const data = {
       name: workflowName,
-      nodes, 
-      edges 
+      nodes,
+      edges
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -57,17 +61,17 @@ export function WorkflowToolsPanel() {
               edges: importedEdges
             })
           })
-          .then(async (response) => {
-            if (!response.ok) throw new Error('Background save failed')
-            const workflow = await response.json()
-            
-            // 3. Sync ID and URL without blocking UI
-            useWorkflowStore.getState().setWorkflowId(workflow.id)
-            router.replace(`/workflow/${workflow.id}`)
-          })
-          .catch(error => {
-            console.error('Failed to persist imported workflow:', error)
-          })
+            .then(async (response) => {
+              if (!response.ok) throw new Error('Background save failed')
+              const workflow = await response.json()
+
+              // 3. Sync ID and URL without blocking UI
+              useWorkflowStore.getState().setWorkflowId(workflow.id)
+              router.replace(`/workflow/${workflow.id}`)
+            })
+            .catch(error => {
+              console.error('Failed to persist imported workflow:', error)
+            })
 
         } catch (error) {
           console.error('Failed to parse import file:', error)
@@ -83,7 +87,7 @@ export function WorkflowToolsPanel() {
 
   const handleLoadSample = async () => {
     try {
-      setSampleUploading(true)
+      handlePreparingChange(true)
 
       // 1. Load the sample workflow definition and show it immediately
       const module = await import('@/lib/sample-workflow')
@@ -115,8 +119,8 @@ export function WorkflowToolsPanel() {
             node.type === 'uploadImage' && value.includes('headphone')
               ? imageUrl
               : node.type === 'uploadVideo' && value.includes('headphone')
-              ? videoUrl
-              : value
+                ? videoUrl
+                : value
 
           return {
             ...node,
@@ -128,10 +132,10 @@ export function WorkflowToolsPanel() {
         }
         return node
       })
-      
+
       // Update store with Transloadit-backed URLs once ready
       useWorkflowStore.getState().setNodes(nodes)
-      
+
       // 4. Create the workflow in background with Transloadit URLs
       fetch('/api/workflows', {
         method: 'POST',
@@ -142,25 +146,31 @@ export function WorkflowToolsPanel() {
           edges: edges
         })
       })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Background save failed')
-        const workflow = await response.json()
-        
-        // 3. Update store and URL with new ID
-        useWorkflowStore.getState().setWorkflowId(workflow.id)
-        router.replace(`/workflow/${workflow.id}`)
-        setSampleUploading(false)
-      })
-      .catch(error => {
-        console.error('Failed to save sample to database:', error)
-        setSampleUploading(false)
-      })
-      
+        .then(async (response) => {
+          if (!response.ok) throw new Error('Background save failed')
+          const workflow = await response.json()
+
+          // 3. Update store and URL with new ID
+          useWorkflowStore.getState().setWorkflowId(workflow.id)
+          router.replace(`/workflow/${workflow.id}`)
+          handlePreparingChange(false)
+        })
+        .catch(error => {
+          console.error('Failed to save sample to database:', error)
+          handlePreparingChange(false)
+        })
+
     } catch (error) {
       console.error('Failed to load sample workflow:', error)
       alert('Failed to load sample workflow')
       setSampleUploading(false)
+      onPreparingChange?.(false)
     }
+  }
+
+  const handlePreparingChange = (prep: boolean) => {
+    setSampleUploading(prep)
+    onPreparingChange?.(prep)
   }
 
   return (

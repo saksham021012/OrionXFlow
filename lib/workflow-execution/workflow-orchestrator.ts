@@ -92,27 +92,32 @@ export async function executeNode(
     const promise = (async () => {
         if (!nodesToExecute.includes(nodeId)) return
 
-        // Wait for dependencies
-        const deps = dependencies.get(nodeId) || []
-        await Promise.all(deps.map((dep) =>
-            executeNode(dep, runId, nodes, edges, nodesToExecute, dependencies, outputs, nodePromises)
-        ))
-
         const node = nodes.find((n) => n.id === nodeId)
         if (!node) return
 
-        // Check for cancellation
-        if (await isRunCancelled(runId)) {
-            console.log(`[DEBUG] Run ${runId} was cancelled. Skipping node ${nodeId}`)
-            return
-        }
-
-        const startTime = Date.now()
-        // We initialize without inputs if they are calculated inside executeNodeByType
+        // Create node execution record IMMEDIATELY so it shows up in history
         let nodeExecution = await createNodeExecution(runId, node)
         let capturedInputs: any = null
+        const startTime = Date.now()
 
         try {
+            // Wait for dependencies
+            const deps = dependencies.get(nodeId) || []
+            try {
+                await Promise.all(deps.map((dep) =>
+                    executeNode(dep, runId, nodes, edges, nodesToExecute, dependencies, outputs, nodePromises)
+                ))
+            } catch (depError: any) {
+                // If dependencies fail, this node is effectively failed/skipped
+                throw new Error(`Dependency failed: ${depError.message}`)
+            }
+
+            // Check for cancellation
+            if (await isRunCancelled(runId)) {
+                console.log(`[DEBUG] Run ${runId} was cancelled. Skipping node ${nodeId}`)
+                throw new Error('Workflow run cancelled')
+            }
+
             const executionResult = await executeNodeByType(node, edges, outputs, runId)
             const { result, inputs } = executionResult
             capturedInputs = inputs
@@ -124,8 +129,20 @@ export async function executeNode(
             outputs.set(nodeId, result)
             await completeNodeExecution(nodeExecution.id, result, inputs, Date.now() - startTime)
         } catch (error: any) {
-            await failNodeExecution(nodeExecution.id, error.message, capturedInputs, Date.now() - startTime)
-            throw error
+            const isCancelled = error.message === 'Workflow run cancelled'
+            if (isCancelled) {
+                await prisma.nodeExecution.update({
+                    where: { id: nodeExecution.id },
+                    data: {
+                        status: 'failed',
+                        error: 'Cancelled',
+                        completedAt: new Date(),
+                    },
+                })
+            } else {
+                await failNodeExecution(nodeExecution.id, error.message, capturedInputs, Date.now() - startTime)
+            }
+            throw error // Re-throw to propagate to downstream
         }
     })()
 

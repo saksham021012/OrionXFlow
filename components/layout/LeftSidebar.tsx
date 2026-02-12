@@ -26,6 +26,7 @@ export default function LeftSidebar() {
     handleCancelWorkflow
   } = useWorkflowExecution()
 
+  const [isPreparing, setIsPreparing] = useState(false)
   const isExpanded = activePanel !== 'none'
 
   return (
@@ -57,13 +58,13 @@ export default function LeftSidebar() {
               <WorkflowNodesPanel />
 
               {/* Tools */}
-              <WorkflowToolsPanel />
+              <WorkflowToolsPanel onPreparingChange={setIsPreparing} />
 
               {/* Actions */}
               <WorkflowActionsPanel
                 executing={executing}
                 cancelling={cancelling}
-                saving={saving}
+                saving={saving || isPreparing}
                 handleRunWorkflow={handleRunWorkflow}
                 handleCancelWorkflow={handleCancelWorkflow}
                 handleSave={handleSave}
@@ -77,6 +78,7 @@ export default function LeftSidebar() {
           isExpanded={isExpanded}
           executing={executing}
           cancelling={cancelling}
+          isPreparing={isPreparing}
           handleRunWorkflow={handleRunWorkflow}
           handleCancelWorkflow={handleCancelWorkflow}
         />
