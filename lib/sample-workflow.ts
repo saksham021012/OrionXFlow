@@ -1,6 +1,9 @@
 
 import { Edge, Node } from 'reactflow'
 
+// For the sample workflow we start with local public assets.
+// On first load, these will be uploaded to Transloadit and replaced
+// with their Transloadit ssl_url versions by the loader.
 export const SAMPLE_WORKFLOW = {
     name: 'Product Marketing Kit Generator',
     description: 'Demonstrates all 6 node types with parallel execution and convergence. Two branches run simultaneously then merge.',
@@ -15,7 +18,7 @@ export const SAMPLE_WORKFLOW = {
             data: {
                 label: 'Product Photo',
                 type: 'uploadImage',
-                value: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop',
+                value: '/headphone.webp',
             },
         },
 
@@ -81,7 +84,7 @@ export const SAMPLE_WORKFLOW = {
             data: {
                 label: 'Product Demo Video',
                 type: 'uploadVideo',
-                value: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                value: '/headphonevideo.mp4',
             },
         },
 

@@ -3,9 +3,11 @@
 import { FileDown, FileUp, Folder } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useWorkflowStore } from '@/store/workflowStore'
+import { useState } from 'react'
 
 export function WorkflowToolsPanel() {
   const { nodes, edges, workflowName } = useWorkflowStore()
+  const [sampleUploading, setSampleUploading] = useState(false)
 
   const handleExport = () => {
     const data = { 
@@ -81,16 +83,56 @@ export function WorkflowToolsPanel() {
 
   const handleLoadSample = async () => {
     try {
+      setSampleUploading(true)
+
+      // 1. Load the sample workflow definition and show it immediately
       const module = await import('@/lib/sample-workflow')
-      const { nodes, edges, name } = module.SAMPLE_WORKFLOW
-      
-      // 1. Update store immediately for instant rendering
-      useWorkflowStore.getState().setNodes(nodes)
+      const { nodes: rawNodes, edges, name } = module.SAMPLE_WORKFLOW
+
+      // Show the sample immediately so the user can start inspecting it
+      useWorkflowStore.getState().setNodes(rawNodes)
       useWorkflowStore.getState().setEdges(edges)
       useWorkflowStore.getState().setWorkflowName(name)
       useWorkflowStore.getState().setWorkflowId('') // Temporary clear ID
+
+      // 2. In the background, upload local sample media to Transloadit
+      const mediaResponse = await fetch('/api/sample-media')
+      if (!mediaResponse.ok) {
+        throw new Error('Failed to prepare sample media')
+      }
+      const { imageUrl, videoUrl } = await mediaResponse.json()
+
+      // 3. Replace local sample paths with Transloadit URLs for persistence & execution
+      const nodes = rawNodes.map((node) => {
+        if (
+          (node.type === 'uploadImage' || node.type === 'uploadVideo') &&
+          typeof (node as any).data?.value === 'string'
+        ) {
+          const value = (node as any).data.value as string
+
+          // Only rewrite our sample media; leave any other URLs alone.
+          const rewritten =
+            node.type === 'uploadImage' && value.includes('headphone')
+              ? imageUrl
+              : node.type === 'uploadVideo' && value.includes('headphone')
+              ? videoUrl
+              : value
+
+          return {
+            ...node,
+            data: {
+              ...(node as any).data,
+              value: rewritten,
+            },
+          }
+        }
+        return node
+      })
       
-      // 2. Create the workflow in background
+      // Update store with Transloadit-backed URLs once ready
+      useWorkflowStore.getState().setNodes(nodes)
+      
+      // 4. Create the workflow in background with Transloadit URLs
       fetch('/api/workflows', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,14 +149,17 @@ export function WorkflowToolsPanel() {
         // 3. Update store and URL with new ID
         useWorkflowStore.getState().setWorkflowId(workflow.id)
         router.replace(`/workflow/${workflow.id}`)
+        setSampleUploading(false)
       })
       .catch(error => {
         console.error('Failed to save sample to database:', error)
+        setSampleUploading(false)
       })
       
     } catch (error) {
       console.error('Failed to load sample workflow:', error)
       alert('Failed to load sample workflow')
+      setSampleUploading(false)
     }
   }
 
@@ -142,10 +187,13 @@ export function WorkflowToolsPanel() {
         </div>
         <button
           onClick={handleLoadSample}
+          disabled={sampleUploading}
           className="w-full h-16 sm:h-20 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2"
         >
           <Folder className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-          <span className="text-[10px] sm:text-xs text-white font-medium">Sample Workflow</span>
+          <span className="text-[10px] sm:text-xs text-white font-medium">
+            {sampleUploading ? 'Preparing Sample…' : 'Sample Workflow'}
+          </span>
         </button>
       </div>
     </div>
