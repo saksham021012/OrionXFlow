@@ -11,19 +11,19 @@ type PanelType = 'none' | 'search' | 'nodes'
 export default function LeftSidebar() {
   const [activePanel, setActivePanel] = useState<PanelType>('nodes')
   const [isNavigating, setIsNavigating] = useState(false)
-  
+
   const togglePanel = (panel: PanelType) => {
     setActivePanel(activePanel === panel ? 'none' : panel)
   }
 
   // Workflow actions
-  const { 
-    saving, 
-    executing, 
-    cancelling, 
-    handleSave, 
-    handleRunWorkflow, 
-    handleCancelWorkflow 
+  const {
+    saving,
+    executing,
+    cancelling,
+    handleSave,
+    handleRunWorkflow,
+    handleCancelWorkflow
   } = useWorkflowExecution()
 
   const isExpanded = activePanel !== 'none'
@@ -31,9 +31,9 @@ export default function LeftSidebar() {
   return (
     <div className="relative h-full flex bg-[#0a0a0a]">
       {/* Icon Bar - Always Visible */}
-      <SidebarIconBar 
-        activePanel={activePanel} 
-        togglePanel={togglePanel} 
+      <SidebarIconBar
+        activePanel={activePanel}
+        togglePanel={togglePanel}
         isNavigating={isNavigating}
         setIsNavigating={setIsNavigating}
         isExpanded={isExpanded}
@@ -41,14 +41,16 @@ export default function LeftSidebar() {
 
       {/* Expandable Panel */}
       <div
-        className={`bg-[#0a0a0a] border-r border-[#2a2a2a] transition-all duration-300 overflow-hidden ${
-          isExpanded ? 'w-56 sm:w-64' : 'w-0'
-        }`}
+        className={`bg-[#0a0a0a] border-r border-[#2a2a2a] transition-all duration-300 overflow-hidden ${isExpanded ? 'w-56 sm:w-64' : 'w-0'
+          }`}
       >
-        <div className="w-56 sm:w-64 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        <div
+          className="w-56 sm:w-64 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+          data-lenis-prevent
+        >
           {/* Top Spacer for floating bubble */}
           <div className="h-12 sm:h-14 md:h-16" />
-          
+
           {(activePanel === 'search' || activePanel === 'nodes') && (
             <div className="p-3 sm:p-4 pt-0 space-y-4 sm:space-y-6">
               {/* Nodes Panel */}
@@ -58,7 +60,7 @@ export default function LeftSidebar() {
               <WorkflowToolsPanel />
 
               {/* Actions */}
-              <WorkflowActionsPanel 
+              <WorkflowActionsPanel
                 executing={executing}
                 cancelling={cancelling}
                 saving={saving}
@@ -69,9 +71,9 @@ export default function LeftSidebar() {
             </div>
           )}
         </div>
-        
+
         {/* Footer - Run/Cancel Button */}
-        <SidebarFooter 
+        <SidebarFooter
           isExpanded={isExpanded}
           executing={executing}
           cancelling={cancelling}

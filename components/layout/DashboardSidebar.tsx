@@ -20,7 +20,7 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
           onClick={onClose}
         />
@@ -31,34 +31,36 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
         w-64 bg-[#0a0a0a] border-r border-[#2a2a2a] flex flex-col transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-      {/* User Profile Section */}
-      <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2">
-         <UserMenu />
-      </div>
+        {/* User Profile Section */}
+        <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2">
+          <UserMenu />
+        </div>
 
-      {/* Create New File Button */}
-      <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-        <CreateWorkflowButton />
-      </div>
+        {/* Create New File Button */}
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+          <CreateWorkflowButton />
+        </div>
 
-      {/* Navigation */}
-      <div className="flex-1 px-1.5 sm:px-2 py-1.5 sm:py-2 space-y-0.5 sm:space-y-1">
-        
-        
-        <Link 
-          href="/dashboard" 
-          className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-xs sm:text-sm transition-colors ${
-            isActive('/dashboard') 
-              ? 'text-white bg-[#1a1a1a]' 
-              : 'text-[#a1a1a1] hover:text-white hover:bg-[#1a1a1a]'
-          }`}
+        {/* Navigation */}
+        <div
+          className="flex-1 px-1.5 sm:px-2 py-1.5 sm:py-2 space-y-0.5 sm:space-y-1 overflow-y-auto"
+          data-lenis-prevent
         >
-          <Folder className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          My Files
-        </Link>
 
 
-      </div>
+          <Link
+            href="/dashboard"
+            className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-xs sm:text-sm transition-colors ${isActive('/dashboard')
+                ? 'text-white bg-[#1a1a1a]'
+                : 'text-[#a1a1a1] hover:text-white hover:bg-[#1a1a1a]'
+              }`}
+          >
+            <Folder className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            My Files
+          </Link>
+
+
+        </div>
 
       </div>
     </>

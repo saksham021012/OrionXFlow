@@ -72,7 +72,10 @@ export function RunHistoryList() {
       </div>
 
       {/* Runs List */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 sm:space-y-2">
+      <div
+        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 sm:space-y-2"
+        data-lenis-prevent
+      >
         {!workflowId ? (
           <div className="text-center py-6 sm:py-8 px-4">
             <p className="text-xs sm:text-sm text-[#a0a0a0]">Save the workflow first</p>
