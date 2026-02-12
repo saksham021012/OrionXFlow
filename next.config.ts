@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Allow Transloadit + any HTTPS CDN that might be used
+    // for sample workflow media in production.
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,7 +24,14 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-      }
+      },
+      // Fallback: allow any HTTPS host for images.
+      // This avoids production-only failures when Transloadit
+      // serves from a different CDN/domain than expected.
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
   // Increase body size limit for file uploads (default is 10MB)
