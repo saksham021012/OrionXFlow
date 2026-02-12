@@ -95,7 +95,7 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
           className="absolute left-0 flex items-center"
           style={{ top: `${((index + 1) * 100) / (inputs.length + 1)}%`, transform: 'translateY(-50%)' }}
         >
-          <span className="absolute right-full mr-2 text-[11px] text-[#a0a0a0] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="absolute right-full mr-2 text-[11px] text-[#a0a0a0] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
             {input.label}
           </span>
           <Handle
@@ -122,7 +122,7 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <h3 
+            <h3
               className="text-sm font-semibold text-white cursor-pointer hover:text-primary transition-colors"
               onClick={handleLabelClick}
               title="Click to rename"
@@ -130,7 +130,7 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
               {data.label}
             </h3>
           )}
-          
+
           <div className="flex items-center gap-2">
             {data.status && data.status !== 'idle' && (
               <div
@@ -158,13 +158,13 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
               >
                 <MoreHorizontal className="w-4 h-4 text-white" />
               </button>
-              
+
               {/* Dropdown menu */}
               {showMenu && (
                 <>
                   {/* Backdrop to close menu */}
-                  <div 
-                    className="fixed inset-0 z-10" 
+                  <div
+                    className="fixed inset-0 z-10"
                     onClick={() => setShowMenu(false)}
                   />
                   {/* Menu content */}
@@ -199,7 +199,7 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
           className="absolute right-0 flex items-center"
           style={{ top: `${((index + 1) * 100) / (outputs.length + 1)}%`, transform: 'translateY(-50%)' }}
         >
-          <span className="absolute left-full ml-2 text-[11px] text-[#a0a0a0] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="absolute left-full ml-2 text-[11px] text-[#a0a0a0] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
             {output.label}
           </span>
           <Handle
