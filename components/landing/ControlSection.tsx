@@ -12,7 +12,11 @@ const ControlOutcome = () => {
         { id: 'spaceship', icon: 'image', name: 'SPACESHIP', type: 'image', src: '/weavy/section2-control/spaceship.avif' },
     ];
 
-    const LayerIcon = ({ type }) => {
+    interface LayerIconProps {
+        type: string;
+    }
+
+    const LayerIcon = ({ type }: LayerIconProps) => {
         if (type === 'canvas') {
             return (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +103,7 @@ const ControlOutcome = () => {
                                 alt="UI Desktop background"
                                 className="absolute inset-0 w-full h-full object-cover"
                                 onError={(e) => {
-                                    e.target.style.display = 'none';
+                                    (e.target as HTMLImageElement).style.display = 'none';
                                 }}
                             />
 
@@ -109,7 +113,7 @@ const ControlOutcome = () => {
                                     src="/weavy/section2-control/spaceship.avif"
                                     alt="Spaceship"
                                     className="w-full h-full object-cover"
-                                    onError={(e) => e.target.style.display = 'none'}
+                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
                                 />
                             </div>
 
@@ -119,7 +123,7 @@ const ControlOutcome = () => {
                                     src="/weavy/section2-control/astro.avif"
                                     alt="Astronaut"
                                     className="w-full h-full object-cover"
-                                    onError={(e) => e.target.style.display = 'none'}
+                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
                                 />
                             </div>
 
@@ -129,7 +133,7 @@ const ControlOutcome = () => {
                                     src="/weavy/section2-control/text-in-astro.svg"
                                     alt="Text in Astronaut"
                                     className="w-auto h-auto object-contain"
-                                    onError={(e) => e.target.style.display = 'none'}
+                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
                                 />
                             </div>
 
@@ -139,7 +143,7 @@ const ControlOutcome = () => {
                                     src="/weavy/section2-control/phone.avif"
                                     alt="Walkie Talkie"
                                     className="w-[120px] h-auto object-contain"
-                                    onError={(e) => e.target.style.display = 'none'}
+                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
                                 />
                             </div>
                         </div>
