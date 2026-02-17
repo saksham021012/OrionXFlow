@@ -65,6 +65,7 @@ export default function LeftSidebar() {
                 executing={executing}
                 cancelling={cancelling}
                 saving={saving || isPreparing}
+                isPreparing={isPreparing}
                 handleRunWorkflow={handleRunWorkflow}
                 handleCancelWorkflow={handleCancelWorkflow}
                 handleSave={handleSave}

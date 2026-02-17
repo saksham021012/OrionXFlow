@@ -7,6 +7,7 @@ interface WorkflowActionsPanelProps {
   executing: boolean
   cancelling: boolean
   saving: boolean
+  isPreparing?: boolean
   handleRunWorkflow: () => void
   handleCancelWorkflow: () => void
   handleSave: () => void
@@ -16,6 +17,7 @@ export function WorkflowActionsPanel({
   executing,
   cancelling,
   saving,
+  isPreparing,
   handleRunWorkflow,
   handleCancelWorkflow,
   handleSave
@@ -47,16 +49,20 @@ export function WorkflowActionsPanel({
         ) : (
           <button
             onClick={handleRunWorkflow}
-            disabled={executing || nodes.length === 0}
+            disabled={executing || nodes.length === 0 || isPreparing}
             className="w-full h-10 sm:h-12 rounded-md sm:rounded-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
           >
-            <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-white" />
+            {isPreparing ? (
+              <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-white" />
+            ) : (
+              <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-white" />
+            )}
             <span className="text-xs sm:text-sm text-white font-semibold">
-              Run Workflow
+              {isPreparing ? 'Preparing Sample...' : 'Run Workflow'}
             </span>
           </button>
         )}
-        
+
         {/* New and Save */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button
