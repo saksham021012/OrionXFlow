@@ -25,6 +25,7 @@ export function HistoryItem({ run, isExpanded, onToggle }: HistoryItemProps) {
       case 'completed': return 'text-success bg-success/10'
       case 'failed': return 'text-error bg-error/10'
       case 'running': return 'text-warning bg-warning/10'
+      case 'queued': return 'text-blue-400 bg-blue-400/10'
       case 'partial': return 'text-warning bg-warning/10'
       default: return 'text-muted-foreground bg-muted'
     }
@@ -56,7 +57,7 @@ export function HistoryItem({ run, isExpanded, onToggle }: HistoryItemProps) {
         <div className="border-t border-[#404040] p-2 sm:p-3 space-y-1.5 sm:space-y-2">
           {run.nodeExecutions.length === 0 && (
             <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
-              <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin"/> Initializing nodes...
+              <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" /> Initializing nodes...
             </p>
           )}
           {run.nodeExecutions.map((node, index) => (

@@ -30,6 +30,16 @@ async function createNodeExecution(runId: string, node: Node) {
             runId,
             nodeId: node.id,
             nodeType: node.type || 'unknown',
+            status: 'queued',
+        },
+    })
+}
+
+// Update node execution to running status
+async function startNodeExecution(executionId: string) {
+    await prisma.nodeExecution.update({
+        where: { id: executionId },
+        data: {
             status: 'running',
         },
     })
@@ -117,6 +127,9 @@ export async function executeNode(
                 console.log(`[DEBUG] Run ${runId} was cancelled. Skipping node ${nodeId}`)
                 throw new Error('Workflow run cancelled')
             }
+
+            // Transition from queued to running
+            await startNodeExecution(nodeExecution.id)
 
             const executionResult = await executeNodeByType(node, edges, outputs, runId)
             const { result, inputs } = executionResult

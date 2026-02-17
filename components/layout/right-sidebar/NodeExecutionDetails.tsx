@@ -24,18 +24,18 @@ export function NodeExecutionDetails({ node }: NodeExecutionDetailsProps) {
     return (
       <div className="mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1">
         {Object.entries(node.inputs).map(([key, value]) => {
-            const displayValue = typeof value === 'string' && value.length > 50 
-                ? value.substring(0, 50) + '...' 
-                : (typeof value === 'object' ? JSON.stringify(value) : String(value))
-            
-            return (
-                <div key={key} className="flex items-start gap-1 sm:gap-1.5 pl-0.5">
-                    <span className="text-[#a0a0a0] font-medium text-[10px] sm:text-xs">i</span>
-                    <p className="text-[10px] sm:text-[11px] text-[#a0a0a0] break-all">
-                        {key}: <span className="text-white/80">{displayValue}</span>
-                    </p>
-                </div>
-            )
+          const displayValue = typeof value === 'string' && value.length > 50
+            ? value.substring(0, 50) + '...'
+            : (typeof value === 'object' ? JSON.stringify(value) : String(value))
+
+          return (
+            <div key={key} className="flex items-start gap-1 sm:gap-1.5 pl-0.5">
+              <span className="text-[#a0a0a0] font-medium text-[10px] sm:text-xs">i</span>
+              <p className="text-[10px] sm:text-[11px] text-[#a0a0a0] break-all">
+                {key}: <span className="text-white/80">{displayValue}</span>
+              </p>
+            </div>
+          )
         })}
       </div>
     )
@@ -48,9 +48,9 @@ export function NodeExecutionDetails({ node }: NodeExecutionDetailsProps) {
     if (typeof node.outputs === 'string') {
       value = node.outputs
     } else if (typeof node.outputs === 'object') {
-      
+
       const data = node.outputs.result || node.outputs.outputs || node.outputs
-      
+
       // Extract URL or specific field
       value = data.imageUrl || data.url || data.videoUrl || data.frameUrl || data.response || data.value || (typeof data === 'string' ? data : JSON.stringify(data))
     }
@@ -61,20 +61,20 @@ export function NodeExecutionDetails({ node }: NodeExecutionDetailsProps) {
     return (
       <div className="mt-1 border-t border-white/5 pt-1">
         <details className="group">
-            <summary className="flex items-start gap-1 sm:gap-1.5 cursor-pointer list-none outline-none">
-                <span className="text-[#a0a0a0] font-medium leading-[1.1rem] text-[10px] sm:text-xs">o</span>
-                <span className="text-[10px] sm:text-[11px] text-[#a0a0a0] group-hover:text-white transition-colors flex items-center gap-1">
-                    Output <span className="text-[8px] sm:text-[9px] opacity-50 font-normal">(Click to expand)</span>
-                </span>
-            </summary>
-            {/* Full Output */}
-            <div className="pl-0.5 mt-1 animate-in slide-in-from-top-1 duration-200">
-                <div className="bg-black/40 rounded p-1.5 sm:p-2 border border-white/5 overflow-hidden">
-                    <p className="text-[9px] sm:text-[10px] text-white/90 break-all whitespace-pre-wrap font-mono max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar select-text">
-                        {value}
-                    </p>
-                </div>
+          <summary className="flex items-start gap-1 sm:gap-1.5 cursor-pointer list-none outline-none">
+            <span className="text-[#a0a0a0] font-medium leading-[1.1rem] text-[10px] sm:text-xs">o</span>
+            <span className="text-[10px] sm:text-[11px] text-[#a0a0a0] group-hover:text-white transition-colors flex items-center gap-1">
+              Output <span className="text-[8px] sm:text-[9px] opacity-50 font-normal">(Click to expand)</span>
+            </span>
+          </summary>
+          {/* Full Output */}
+          <div className="pl-0.5 mt-1 animate-in slide-in-from-top-1 duration-200">
+            <div className="bg-black/40 rounded p-1.5 sm:p-2 border border-white/5 overflow-hidden">
+              <p className="text-[9px] sm:text-[10px] text-white/90 break-all whitespace-pre-wrap font-mono max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar select-text">
+                {value}
+              </p>
             </div>
+          </div>
         </details>
       </div>
     )
@@ -85,6 +85,7 @@ export function NodeExecutionDetails({ node }: NodeExecutionDetailsProps) {
       case 'completed': return 'text-success bg-success/10'
       case 'failed': return 'text-error bg-error/10'
       case 'running': return 'text-warning bg-warning/10'
+      case 'queued': return 'text-blue-400 bg-blue-400/10'
       case 'partial': return 'text-warning bg-warning/10'
       default: return 'text-muted-foreground bg-muted'
     }
@@ -116,11 +117,11 @@ export function NodeExecutionDetails({ node }: NodeExecutionDetailsProps) {
           </p>
         </details>
       )}
-      
+
       {node.status === 'completed' && (
         <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1">
-            {renderInputs()}
-            {renderOutput()}
+          {renderInputs()}
+          {renderOutput()}
         </div>
       )}
     </div>
