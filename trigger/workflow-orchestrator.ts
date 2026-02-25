@@ -2,9 +2,7 @@ import { task, batch } from '@trigger.dev/sdk/v3'
 import { prisma } from '@/lib/prisma'
 import { Node, Edge } from 'reactflow'
 
-// ---------------------------------------------------------------------------
 // Types
-// ---------------------------------------------------------------------------
 
 type NodeSpec = {
     nodeId: string
@@ -14,9 +12,7 @@ type NodeSpec = {
     inputs: Record<string, any>
 }
 
-// ---------------------------------------------------------------------------
 // Dependency graph + topological levels
-// ---------------------------------------------------------------------------
 
 function buildDependencyGraph(edges: Edge[], nodesToExecute: string[]): Map<string, string[]> {
     const deps = new Map<string, string[]>()
@@ -61,14 +57,12 @@ function buildTopologicalLevels(nodesToExecute: string[], deps: Map<string, stri
     return levels
 }
 
-// ---------------------------------------------------------------------------
-// Input resolution
-// ---------------------------------------------------------------------------
+
 
 /**
- * Extracts a scalar value (string URL or text) from a raw task output object.
- * Each child task returns a different shape; this normalises them.
- */
+Extracts a scalar value (string URL or text) from a raw task output object.
+*/
+
 function extractScalar(rawOutput: any): any {
     if (!rawOutput) return null
     if (typeof rawOutput === 'string') return rawOutput
@@ -128,9 +122,7 @@ function resolveNodeSpec(node: Node, edges: Edge[], outputs: Map<string, any>): 
     }
 }
 
-// ---------------------------------------------------------------------------
 // DB helpers
-// ---------------------------------------------------------------------------
 
 async function createNodeExecution(runId: string, node: Node) {
     return prisma.nodeExecution.create({
@@ -148,9 +140,8 @@ async function determineRunStatus(runId: string): Promise<'completed' | 'failed'
     return failed ? 'failed' : 'completed'
 }
 
-// ---------------------------------------------------------------------------
-// The orchestrator task
-// ---------------------------------------------------------------------------
+
+// orchestrator task
 
 export const workflowOrchestratorTask = task({
     id: 'workflow-orchestrator',
