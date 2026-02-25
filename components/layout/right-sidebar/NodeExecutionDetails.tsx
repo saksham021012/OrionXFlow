@@ -103,7 +103,7 @@ export function NodeExecutionDetails({ node }: NodeExecutionDetailsProps) {
       </div>
       {node.executionTime && (
         <p className="text-muted-foreground text-[9px] sm:text-[10px]">
-          {node.executionTime}ms
+          {(node.executionTime / 1000).toFixed(1)}s
         </p>
       )}
       {node.error && (

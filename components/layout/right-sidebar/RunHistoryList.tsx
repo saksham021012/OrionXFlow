@@ -83,6 +83,11 @@ export function RunHistoryList() {
               History is tracked for saved workflows
             </p>
           </div>
+        ) : loading && runs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-[#a0a0a0]" />
+            <p className="text-[10px] sm:text-xs text-[#6b6b6b]">Loading history...</p>
+          </div>
         ) : runs.length === 0 ? (
           <div className="text-center py-6 sm:py-8 px-4">
             <p className="text-xs sm:text-sm text-[#a0a0a0]">No workflow runs yet</p>
