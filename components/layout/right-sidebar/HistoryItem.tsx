@@ -1,6 +1,6 @@
 'use client'
 
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format } from 'date-fns'
 import { Loader2 } from 'lucide-react'
 import { NodeExecutionDetails, NodeExecution } from './NodeExecutionDetails'
 
@@ -46,7 +46,7 @@ export function HistoryItem({ run, isExpanded, onToggle }: HistoryItemProps) {
           </span>
         </div>
         <p className="text-[10px] sm:text-xs text-[#a0a0a0]">
-          {formatDistanceToNow(new Date(run.startedAt), { addSuffix: true })}
+          {format(new Date(run.startedAt), 'MMM d, h:mm a')} · {formatDistanceToNow(new Date(run.startedAt), { addSuffix: true })}
         </p>
         <p className="text-[10px] sm:text-xs text-[#a0a0a0] capitalize">
           {run.executionType}
