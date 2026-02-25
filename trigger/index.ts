@@ -5,3 +5,4 @@ import "./extract-frame";
 import "./text-execution";
 import "./upload-image-execution";
 import "./upload-video-execution";
+import "./workflow-orchestrator";

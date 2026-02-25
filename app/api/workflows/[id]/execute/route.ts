@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { ExecuteWorkflowSchema } from '@/lib/schemas'
+import { tasks } from '@trigger.dev/sdk/v3'
+import type { Node, Edge } from 'reactflow'
 
 export const dynamic = 'force-dynamic'
-import { executeWorkflow } from '@/lib/workflow-execution/workflow-orchestrator'
-import type { Node, Edge } from 'reactflow'
 
 export async function POST(
     request: NextRequest,
@@ -73,8 +73,15 @@ export async function POST(
             },
         })
 
-        // Execute workflow asynchronously
-        executeWorkflow(run.id, nodes, edges, nodesToExecute).catch(console.error)
+        // Hand off execution to Trigger.dev — the API route returns immediately.
+        // The workflow-orchestrator task uses checkpoint-resume (triggerAndWait)
+        // internally, so no serverless compute is consumed while sub-tasks run.
+        await tasks.trigger('workflow-orchestrator', {
+            runId: run.id,
+            nodes,
+            edges,
+            nodesToExecute,
+        })
 
         return NextResponse.json({ runId: run.id })
     } catch (error) {
