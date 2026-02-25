@@ -11,13 +11,6 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    console.log(
-        "[TRIGGER DEBUG]",
-        "API key present:",
-        Boolean(process.env.TRIGGER_API_KEY),
-        "Key prefix:",
-        process.env.TRIGGER_API_KEY?.slice(0, 6)
-    );
 
     try {
         const { id } = await params

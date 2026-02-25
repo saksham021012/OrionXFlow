@@ -90,7 +90,6 @@ export async function POST(request: NextRequest) {
         })
 
         // Wait for the assembly to complete processing
-        console.log('Assembly created, waiting for completion...')
         const completedAssembly = await transloadit.awaitAssemblyCompletion(assembly.assembly_id!)
 
         // Clean up temp file
@@ -105,8 +104,6 @@ export async function POST(request: NextRequest) {
         const resultKey = fileType === 'image' ? 'optimized' : 'encoded'
         const uploadedFile = completedAssembly.results?.[resultKey]?.[0] || completedAssembly.results?.[':original']?.[0]
 
-        console.log('Result key:', resultKey)
-        console.log('Uploaded file URL:', uploadedFile?.ssl_url)
 
         if (!uploadedFile?.ssl_url) {
             throw new Error('Upload completed but no URL returned')
