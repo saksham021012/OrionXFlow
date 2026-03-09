@@ -182,18 +182,23 @@ export const workflowOrchestratorTask = task({
             // Expand nodesToExecute to include all upstream dependencies
             const allNodesToExecute = new Set(nodesToExecute)
             const addDependencies = (nodeId: string) => {
+                //find all edges where the target is the current node and add the source node to the set
                 for (const edge of edges.filter((e) => e.target === nodeId)) {
-                    if (!allNodesToExecute.has(edge.source)) {
+                    if (!allNodesToExecute.has(edge.source)) { // if it doesnt alreadt have the source node, add it
                         allNodesToExecute.add(edge.source)
                         addDependencies(edge.source)
                     }
                 }
             }
+            // call addDependencies for each node in the initial nodesToExecute array
             nodesToExecute.forEach(addDependencies)
 
             const finalNodesToExecute = Array.from(allNodesToExecute)
+
             const deps = buildDependencyGraph(edges, finalNodesToExecute)
+
             const levels = buildTopologicalLevels(finalNodesToExecute, deps)
+
             const outputs = new Map<string, any>()
 
             console.log(`[Orchestrator] Execution levels:`, levels)
@@ -205,7 +210,10 @@ export const workflowOrchestratorTask = task({
                     break
                 }
 
+                // get nodes for current level 
                 const levelNodes = level.map((id) => nodes.find((n) => n.id === id)!).filter(Boolean)
+
+                //Convert a graph node into a runnable task specification.
                 const specs = levelNodes.map((n) => resolveNodeSpec(n, edges, outputs))
 
                 // Create DB records for this level before firing tasks
@@ -229,6 +237,7 @@ export const workflowOrchestratorTask = task({
 
                         if (result.ok) {
                             outputs.set(nodeId, result.output)
+
                             await prisma.nodeExecution.update({
                                 where: { id: exec.id },
                                 data: {
@@ -239,9 +248,13 @@ export const workflowOrchestratorTask = task({
                                     completedAt: new Date(),
                                 },
                             })
-                        } else {
+                        }
+
+                        else {
                             const errMsg = (result.error as any)?.message ?? String(result.error) ?? 'Task failed'
+
                             console.error(`[Orchestrator] Node ${nodeId} failed:`, errMsg)
+
                             await prisma.nodeExecution.update({
                                 where: { id: exec.id },
                                 data: {
@@ -258,22 +271,28 @@ export const workflowOrchestratorTask = task({
             }
 
             const status = await determineRunStatus(runId)
+
             await prisma.workflowRun.update({
                 where: { id: runId },
                 data: { status, completedAt: new Date() },
             })
+
             console.log(`[Orchestrator] Run status: ${status}`)
 
             // Write the scalar result back to each node for inline display on the canvas
             const updatedNodes = nodes.map((n) => {
                 const rawOutput = outputs.get(n.id)
+
                 if (rawOutput === undefined) return n
+
                 return { ...n, data: { ...n.data, result: extractScalar(rawOutput) } }
             })
+
             await prisma.workflow.update({
                 where: { id: workflowRun.workflowId },
                 data: { nodes: updatedNodes as any },
             })
+
         } catch (error: any) {
             await prisma.workflowRun.update({
                 where: { id: runId },
