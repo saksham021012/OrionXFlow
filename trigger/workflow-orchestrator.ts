@@ -2,6 +2,25 @@ import { task, batch } from '@trigger.dev/sdk/v3'
 import { prisma } from '@/lib/prisma'
 import { Node, Edge } from 'reactflow'
 
+/**
+ * Workflow Orchestrator Flow
+ *
+ * 1. Load workflow run and expand nodesToExecute to include all upstream dependencies.
+ *
+ * 2. Build the dependency graph and compute execution levels using topological sorting.
+ *
+ * 3. Execute nodes level-by-level:
+ *      - Resolve task specs and inputs
+ *      - Create node execution records
+ *      - Trigger tasks in parallel
+ *
+ * 4. Collect task results, store outputs, and update execution records
+ *    with success/failure status.
+ *
+ * 5. Determine final workflow status and persist node results so they
+ *    can be displayed on the workflow canvas.
+ */
+
 // Types
 
 type NodeSpec = {
