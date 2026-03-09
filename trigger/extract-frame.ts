@@ -7,9 +7,11 @@ import { Transloadit } from 'transloadit'
 
 export const extractFrameTask = task({
     id: 'extract-frame',
+
     run: async (payload: {
         videoUrl: string
         timestamp: string | number
+
     }) => {
         try {
             // Create temp file for output only
@@ -18,6 +20,7 @@ export const extractFrameTask = task({
 
             // Parse timestamp
             let seekTime: string
+
             // We need to probe the remote URL for duration if using percentage
             if (typeof payload.timestamp === 'string' && payload.timestamp.includes('%')) {
                 // Percentage-based timestamp
@@ -32,6 +35,7 @@ export const extractFrameTask = task({
                 })
 
                 seekTime = ((duration * percentage) / 100).toFixed(2)
+
             } else {
                 // Seconds-based timestamp
                 seekTime = payload.timestamp.toString()
