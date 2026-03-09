@@ -78,43 +78,63 @@ function getInput(edges: Edge[], outputs: Map<string, any>, nodeId: string, hand
     return raw !== undefined ? extractScalar(raw) : fallback //return scalar value
 }
 
+/**Convert a graph node into a runnable task specification. 
+*/
 function resolveNodeSpec(node: Node, edges: Edge[], outputs: Map<string, any>): NodeSpec {
+
     const nodeId = node.id
+
     switch (node.type) {
         case 'llm': {
             const systemPrompt = getInput(edges, outputs, nodeId, 'system_prompt')
             const userMessage = getInput(edges, outputs, nodeId, 'user_message', node.data.value || '')
+
             const imageEdges = edges.filter(
                 (e) => e.target === nodeId && (e.targetHandle?.startsWith('image_') || e.targetHandle === 'images')
             )
+
             const images = imageEdges.map((e) => extractScalar(outputs.get(e.source))).filter(Boolean) as string[]
+
             const model = node.data.model || 'gemini-2.5-flash-lite'
+
             const inputs = { model, systemPrompt, userMessage, images }
             return { nodeId, node, taskId: 'llm-execution', inputs }
         }
+
         case 'cropImage': {
             const inputs = {
                 imageUrl: getInput(edges, outputs, nodeId, 'image_url', ''),
+
                 xPercent: Number(getInput(edges, outputs, nodeId, 'x_percent', node.data.x_percent ?? 0)),
+
                 yPercent: Number(getInput(edges, outputs, nodeId, 'y_percent', node.data.y_percent ?? 0)),
+
                 widthPercent: Number(getInput(edges, outputs, nodeId, 'width_percent', node.data.width_percent ?? 100)),
+
                 heightPercent: Number(getInput(edges, outputs, nodeId, 'height_percent', node.data.height_percent ?? 100)),
             }
             return { nodeId, node, taskId: 'crop-image', inputs }
         }
+
         case 'extractFrame': {
             const inputs = {
                 videoUrl: getInput(edges, outputs, nodeId, 'video_url', ''),
+
                 timestamp: String(getInput(edges, outputs, nodeId, 'timestamp', node.data.timestamp ?? '50%')),
             }
+
             return { nodeId, node, taskId: 'extract-frame', inputs }
         }
+
         case 'text':
             return { nodeId, node, taskId: 'text-execution', inputs: { value: node.data.value } }
+
         case 'uploadImage':
             return { nodeId, node, taskId: 'upload-image-execution', inputs: { value: node.data.value } }
+
         case 'uploadVideo':
             return { nodeId, node, taskId: 'upload-video-execution', inputs: { value: node.data.value } }
+
         default:
             throw new Error(`Unknown node type: ${node.type} (node ${nodeId})`)
     }
