@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
+//for future when the option to cancel a particular run from the history panel is added. Not being utilised currently.
+
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }

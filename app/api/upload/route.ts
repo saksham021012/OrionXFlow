@@ -9,6 +9,10 @@ import { tmpdir } from 'os'
 export const maxDuration = 60 // 60 seconds timeout
 export const dynamic = 'force-dynamic'
 
+// LEGACY: This server-side upload route is currently unused.
+// The application now utilizes a 'Direct-to-Cloud' pattern (see useTransloadit.ts) 
+// for better performance and to avoid serverless timeout limits.
+
 export async function POST(request: NextRequest) {
     let tempFilePath: string | null = null
 

@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
+// Not used yet. We currently get run details directly when fetching the Workflow.
+// kept for when we want to expand the info of a particular run on a separate page
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
