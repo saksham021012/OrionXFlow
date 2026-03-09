@@ -17,8 +17,8 @@ type NodeSpec = {
 function buildDependencyGraph(edges: Edge[], nodesToExecute: string[]): Map<string, string[]> {
     const deps = new Map<string, string[]>()
     for (const nodeId of nodesToExecute) {
-        const incoming = edges.filter((e) => e.target === nodeId && nodesToExecute.includes(e.source))
-        deps.set(nodeId, incoming.map((e) => e.source))
+        const incoming = edges.filter((e) => e.target === nodeId && nodesToExecute.includes(e.source)) //incoming edges to node where targer = nodeId and also node is in nodesToExecute
+        deps.set(nodeId, incoming.map((e) => e.source)) //set incoming edges to node in deps map
     }
     return deps
 }
@@ -29,35 +29,33 @@ function buildTopologicalLevels(nodesToExecute: string[], deps: Map<string, stri
     const dependents = new Map<string, string[]>()
 
     for (const nodeId of nodesToExecute) {
-        inDegree.set(nodeId, deps.get(nodeId)?.length ?? 0)
-        dependents.set(nodeId, [])
+        inDegree.set(nodeId, deps.get(nodeId)?.length ?? 0) //set indegree
+        dependents.set(nodeId, []) //set dependents
     }
     for (const [nodeId, nodeDeps] of deps) {
         for (const dep of nodeDeps) {
-            dependents.get(dep)?.push(nodeId)
+            dependents.get(dep)?.push(nodeId) //add dependents
         }
     }
 
     const levels: string[][] = []
-    let queue = nodesToExecute.filter((id) => inDegree.get(id) === 0)
+    let queue = nodesToExecute.filter((id) => inDegree.get(id) === 0) //nodes with 0 indegree
 
     while (queue.length > 0) {
         levels.push([...queue])
         const nextQueue: string[] = []
         for (const nodeId of queue) {
             for (const dependent of dependents.get(nodeId) ?? []) {
-                const newDegree = (inDegree.get(dependent) ?? 1) - 1
-                inDegree.set(dependent, newDegree)
-                if (newDegree === 0) nextQueue.push(dependent)
+                const newDegree = (inDegree.get(dependent) ?? 1) - 1 //decrease in degree by 1 after processing
+                inDegree.set(dependent, newDegree) //replace indegree with newDegree
+                if (newDegree === 0) nextQueue.push(dependent) //add to queue if indegree is 0
             }
         }
-        queue = nextQueue
+        queue = nextQueue //update queue
     }
 
     return levels
 }
-
-
 
 /**
 Extracts a scalar value (string URL or text) from a raw task output object.
@@ -74,10 +72,10 @@ function extractScalar(rawOutput: any): any {
 
 /** Read the resolved scalar from an upstream node's output via a named edge handle */
 function getInput(edges: Edge[], outputs: Map<string, any>, nodeId: string, handle: string, fallback?: any): any {
-    const edge = edges.find((e) => e.target === nodeId && e.targetHandle === handle)
+    const edge = edges.find((e) => e.target === nodeId && e.targetHandle === handle)   //find edge where target = nodeId and targetHandle = handle
     if (!edge) return fallback
-    const raw = outputs.get(edge.source)
-    return raw !== undefined ? extractScalar(raw) : fallback
+    const raw = outputs.get(edge.source) //get output from source
+    return raw !== undefined ? extractScalar(raw) : fallback //return scalar value
 }
 
 function resolveNodeSpec(node: Node, edges: Edge[], outputs: Map<string, any>): NodeSpec {
