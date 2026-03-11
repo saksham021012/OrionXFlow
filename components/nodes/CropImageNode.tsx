@@ -10,6 +10,7 @@ import { useWorkflowExecution } from '@/hooks/useWorkflowExecution'
 import { ParamInput, CropOverlay, ASPECT_RATIOS, INPUT_BASE_CLASS } from './Helpers/CropImageHelpers'
 
 function CropImageNode(props: NodeProps<NodeData>) {
+
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData)
   const nodes = useWorkflowStore((state) => state.nodes)
   const edges = useWorkflowStore((state) => state.edges)
@@ -25,70 +26,106 @@ function CropImageNode(props: NodeProps<NodeData>) {
 
   const isRunning = props.data.status === 'running'
 
+  //useEffect to update the values of the node when the connected node changes
   useEffect(() => {
     const findConnectedValue = (handleId: string) => {
+
       const edge = edges.find(e => e.target === props.id && e.targetHandle === handleId)
       if (!edge) return null
+
       const sourceNode = nodes.find(n => n.id === edge.source)
       return sourceNode?.data.result || sourceNode?.data.value || null
     }
 
     const connImageUrl = findConnectedValue('image_url')
+
     if (connImageUrl && typeof connImageUrl === 'string' && connImageUrl !== imageUrl) {
       setImageUrl(connImageUrl)
     }
 
     const updates: Partial<NodeData> = {}
+
     const params = ['x_percent', 'y_percent', 'width_percent', 'height_percent'] as const
+
     const currentlyConnected = new Set<string>()
 
     params.forEach(param => {
+      // check if another node is connected to this handle
       const val = findConnectedValue(param)
-      if (val !== null) {
+
+
+      if (val !== null) { //another node is connected to this handle
         currentlyConnected.add(param)
         const numVal = parseFloat(val)
+        // value is a num and diff from current val
         if (!isNaN(numVal) && Number(props.data[param]) !== numVal) {
           updates[param] = numVal
         }
-      } else if (prevConnectedRef.current.has(param)) {
+      }
+      // not connected reset to default
+      else if (prevConnectedRef.current.has(param)) {
         updates[param] = param.includes('width') || param.includes('height') ? 100 : 0
       }
     })
 
+    //update to currentlyConnceted vals
     prevConnectedRef.current = currentlyConnected
     if (Object.keys(updates).length > 0) {
       updateNodeData(props.id, updates)
     }
-  }, [edges, nodes, props.id, props.data.x_percent, props.data.y_percent, props.data.width_percent, props.data.height_percent, updateNodeData, imageUrl])
+
+  }, [edges,
+    nodes,
+    props.id,
+    props.data.x_percent,
+    props.data.y_percent,
+    props.data.width_percent,
+    props.data.height_percent,
+    updateNodeData, imageUrl
+  ])
 
   const handleChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value) || 0
-    updateNodeData(props.id, { [field]: Math.max(0, Math.min(100, value)) })
+
+
+    const value = parseFloat(e.target.value) || 0 //convert i/p to number
+    updateNodeData(props.id, { [field]: Math.max(0, Math.min(100, value)) }) //update node data, between 0 and 100 percentage only
+
     setSelectedRatio('Custom')
   }, [props.id, updateNodeData])
 
   const handleReset = useCallback(() => {
+
     updateNodeData(props.id, { x_percent: 0, y_percent: 0, width_percent: 100, height_percent: 100 })
+
     setSelectedRatio('Custom')
   }, [props.id, updateNodeData])
 
   const applyAspectRatio = useCallback((ratio: string) => {
+
     if (!ratio || ratio === 'Custom') return
+
     setSelectedRatio(ratio)
+
     const preset = ASPECT_RATIOS[ratio]
     if (preset) updateNodeData(props.id, preset)
+
   }, [props.id, updateNodeData])
 
   const dimensions = useMemo(() => ({
+    // calculate width and height from percentage
     width: Math.round(((props.data.width_percent || 100) / 100) * 1024),
+
     height: Math.round(((props.data.height_percent || 100) / 100) * 1024),
   }), [props.data.width_percent, props.data.height_percent])
 
   const handleDimensionChange = useCallback((field: 'width' | 'height') => (e: React.ChangeEvent<HTMLInputElement>) => {
+
     const value = parseInt(e.target.value) || 0
     const percent = (value / 1024) * 100
     const fieldName = field === 'width' ? 'width_percent' : 'height_percent'
+
     updateNodeData(props.id, { [fieldName]: Math.max(0, Math.min(100, percent)) })
+
     setSelectedRatio('Custom')
   }, [props.id, updateNodeData])
 

@@ -9,49 +9,65 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { useWorkflowExecution } from '@/hooks/useWorkflowExecution'
 
 function ExtractFrameNode(props: NodeProps<NodeData>) {
+
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData)
   const nodes = useWorkflowStore((state) => state.nodes)
   const edges = useWorkflowStore((state) => state.edges)
   const { executing, handleRunSingleNode } = useWorkflowExecution()
-  
+
+  //check if the handle is connected
   const isHandleConnected = useCallback((handleId: string) => {
+
     return edges.some(edge => edge.target === props.id && edge.targetHandle === handleId)
+
   }, [edges, props.id])
 
   const isRunning = props.data.status === 'running'
 
   const prevConnectedRef = useRef<Set<string>>(new Set())
 
-  // Reactive input syncing
+  // if another node sends timestamp use it else use default value
   useEffect(() => {
     const findConnectedValue = (handleId: string) => {
-        const edge = edges.find(e => e.target === props.id && e.targetHandle === handleId)
-        if (!edge) return null
-        const sourceNode = nodes.find(n => n.id === edge.source)
-        return sourceNode?.data.result || sourceNode?.data.value || null
+      //find edge connected to this node
+      const edge = edges.find(e => e.target === props.id && e.targetHandle === handleId)
+      if (!edge) return null
+
+      const sourceNode = nodes.find(n => n.id === edge.source)
+
+      return sourceNode?.data.result || sourceNode?.data.value || null
     }
 
     const updates: Partial<NodeData> = {}
     const currentlyConnected = new Set<string>()
-    
+
     const connTimestamp = findConnectedValue('timestamp')
+
     if (connTimestamp !== null) {
-        currentlyConnected.add('timestamp')
-        const stringVal = String(connTimestamp)
-        if (props.data.timestamp !== stringVal) {
-            updates.timestamp = stringVal
-        }
-    } else if (prevConnectedRef.current.has('timestamp')) {
-        // Disconnected
-        updates.timestamp = '50%'
+      // if timestamp is connected
+      currentlyConnected.add('timestamp')
+      const stringVal = String(connTimestamp)
+      // if timestamp is changed
+      if (props.data.timestamp !== stringVal) {
+        updates.timestamp = stringVal
+      }
+    }
+    // if timestamp is disconnected
+    else if (prevConnectedRef.current.has('timestamp')) {
+      updates.timestamp = '50%'
     }
 
     prevConnectedRef.current = currentlyConnected
 
     if (Object.keys(updates).length > 0) {
-        updateNodeData(props.id, updates)
+      updateNodeData(props.id, updates)
     }
-  }, [edges, nodes, props.id, props.data.timestamp, updateNodeData])
+  }, [edges,
+    nodes,
+    props.id,
+    props.data.timestamp,
+    updateNodeData
+  ])
 
   const handleRun = () => {
     handleRunSingleNode(props.id)
@@ -124,9 +140,9 @@ function ExtractFrameNode(props: NodeProps<NodeData>) {
               <span className="w-1.5 h-1.5 bg-success rounded-full"></span>
               Extracted Frame
             </p>
-            <img 
-              src={props.data.result.frameUrl} 
-              alt="Extracted frame" 
+            <img
+              src={props.data.result.frameUrl}
+              alt="Extracted frame"
               className="w-full h-auto rounded border border-[#2a2a2a]"
             />
           </div>
