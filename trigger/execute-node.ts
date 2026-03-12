@@ -15,9 +15,6 @@ type NodeSpec = {
 
 function extractScalar(rawOutput: any): any {
     if (!rawOutput) return null
-    if (rawOutput.ok !== undefined && rawOutput.output !== undefined) {
-        rawOutput = rawOutput.output
-    }
     if (typeof rawOutput === 'string') return rawOutput
     if (rawOutput.imageUrl) return rawOutput.imageUrl
     if (rawOutput.frameUrl) return rawOutput.frameUrl
@@ -145,25 +142,10 @@ export const executeNodeTask = task({
             for (let i = 0; i < depResults.runs.length; i++) {
                 const result = depResults.runs[i]
                 
-                let isSuccess = false
-                let outputValue = null
-                let errMessage = 'Upstream dependency failed'
-
                 if (result.ok) {
-                    const innerResult = result.output as any
-                    if (innerResult && innerResult.ok) {
-                        isSuccess = true
-                        outputValue = innerResult.output
-                    } else {
-                        errMessage = innerResult?.error?.message || innerResult?.error || errMessage
-                    }
+                    upstreamOutputs.set(upstreamEdges[i].source, result.output)
                 } else {
-                    errMessage = (result as any).error?.message || errMessage
-                }
-
-                if (isSuccess) {
-                    upstreamOutputs.set(upstreamEdges[i].source, outputValue)
-                } else {
+                    const errMessage = (result as any).error?.message || String((result as any).error) || 'Upstream dependency failed'
                     // Upstream failed — single DB write directly to 'failed'
                     const node = nodes.find((n) => n.id === nodeId)!
                     await prisma.nodeExecution.create({
@@ -172,7 +154,7 @@ export const executeNodeTask = task({
                             nodeId: node.id,
                             nodeType: node.type || 'unknown',
                             status: 'failed',
-                            error: typeof errMessage === 'string' ? errMessage : JSON.stringify(errMessage),
+                            error: errMessage,
                             completedAt: new Date(),
                         },
                     })
@@ -180,8 +162,9 @@ export const executeNodeTask = task({
                         status: 'failed',
                         error: errMessage,
                     })
-                    // Pass the failure downstream for the parent caller to observe it
-                    return { ok: false, error: errMessage }
+                    // THROW instead of returning gracefully, so Trigger.dev registers THIS execute-node task as failed
+                    // which appropriately stops DOWNSTREAM execution that depends on it.
+                    throw new Error(`Upstream dependency ${upstreamEdges[i].source} failed`)
                 }
             }
         }
@@ -243,7 +226,7 @@ export const executeNodeTask = task({
                     },
                 })
                 metadata.root.set(`node_${nodeId}`, { status: 'failed', error: errMsg })
-                return null
+                throw new Error(errMsg)
             }
         } catch (error: any) {
             const elapsed = Date.now() - startTime
