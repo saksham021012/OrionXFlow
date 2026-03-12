@@ -15,6 +15,9 @@ type NodeSpec = {
 
 function extractScalar(rawOutput: any): any {
     if (!rawOutput) return null
+    if (rawOutput.ok !== undefined && rawOutput.output !== undefined) {
+        rawOutput = rawOutput.output
+    }
     if (typeof rawOutput === 'string') return rawOutput
     if (rawOutput.imageUrl) return rawOutput.imageUrl
     if (rawOutput.frameUrl) return rawOutput.frameUrl
@@ -141,8 +144,25 @@ export const executeNodeTask = task({
 
             for (let i = 0; i < depResults.runs.length; i++) {
                 const result = depResults.runs[i]
+                
+                let isSuccess = false
+                let outputValue = null
+                let errMessage = 'Upstream dependency failed'
+
                 if (result.ok) {
-                    upstreamOutputs.set(upstreamEdges[i].source, result.output)
+                    const innerResult = result.output as any
+                    if (innerResult && innerResult.ok) {
+                        isSuccess = true
+                        outputValue = innerResult.output
+                    } else {
+                        errMessage = innerResult?.error?.message || innerResult?.error || errMessage
+                    }
+                } else {
+                    errMessage = (result as any).error?.message || errMessage
+                }
+
+                if (isSuccess) {
+                    upstreamOutputs.set(upstreamEdges[i].source, outputValue)
                 } else {
                     // Upstream failed — single DB write directly to 'failed'
                     const node = nodes.find((n) => n.id === nodeId)!
@@ -152,15 +172,16 @@ export const executeNodeTask = task({
                             nodeId: node.id,
                             nodeType: node.type || 'unknown',
                             status: 'failed',
-                            error: 'Upstream dependency failed',
+                            error: typeof errMessage === 'string' ? errMessage : JSON.stringify(errMessage),
                             completedAt: new Date(),
                         },
                     })
                     metadata.root.set(`node_${nodeId}`, {
                         status: 'failed',
-                        error: 'Upstream dependency failed',
+                        error: errMessage,
                     })
-                    return null
+                    // Pass the failure downstream for the parent caller to observe it
+                    return { ok: false, error: errMessage }
                 }
             }
         }
