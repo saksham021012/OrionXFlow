@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkflowStore } from '@/store/workflowStore'
 
@@ -13,6 +13,12 @@ export function useWorkflowExecution() {
         lastRunCompleted, setLastRunCompleted, runs, setRuns,
         updateRunStatus,
     } = useWorkflowStore()
+
+    // Abort controller for the in-flight /execute fetch — lets cancel kill it mid-request
+    const executeAbortRef = useRef<AbortController | null>(null)
+    // Tracks a run ID that was cancelled before the execute response arrived.
+    // handleRunWorkflow checks this to avoid overwriting post-cancel state.
+    const cancelledRunIdRef = useRef<string | null>(null)
 
     // Helper to update loading state
     const setLoadingState = (key: keyof typeof loading, value: boolean) =>
@@ -66,6 +72,12 @@ export function useWorkflowExecution() {
 
     const handleRunWorkflow = async () => {
         setLoadingState('executing', true)
+        cancelledRunIdRef.current = null
+
+        // Create a fresh AbortController for this execute request
+        const abortController = new AbortController()
+        executeAbortRef.current = abortController
+
         try {
             const { workflowName, nodes, edges, workflowId: currentId } = useWorkflowStore.getState()
 
@@ -80,24 +92,35 @@ export function useWorkflowExecution() {
                 data: { ...n.data, status: 'queued', result: undefined, error: undefined }
             })))
 
-            // Execute
+            // Execute — pass AbortController signal so cancel can kill this mid-flight
             const execRes = await fetch(`/api/workflows/${wId}/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ executionType: 'full' }),
+                signal: abortController.signal,
             })
 
             if (!execRes.ok) throw new Error('Execution failed')
 
             const execData = await execRes.json()
             const { runId, triggerRunId, publicAccessToken, run } = execData
+
+            // Guard: if cancel already fired for this run while fetch was in-flight,
+            // don't overwrite the post-cancel state with stale "running" data.
+            if (cancelledRunIdRef.current === runId || abortController.signal.aborted) {
+                return
+            }
+
             const currentRuns = useWorkflowStore.getState().runs
             setRuns([run, ...currentRuns])
             setLastRunId(runId)
             setTriggerRunId(triggerRunId)
             setPublicAccessToken(publicAccessToken)
             // executing stays true — cleared by lastRunCompleted effect above
-        } catch (error) {
+        } catch (error: any) {
+            // AbortError is expected when cancel aborts the in-flight request — don't alert
+            if (error?.name === 'AbortError') return
+
             console.error(error)
             setLoadingState('executing', false)
             setNodes(useWorkflowStore.getState().nodes.map(n => ({
@@ -105,6 +128,8 @@ export function useWorkflowExecution() {
                 data: { ...n.data, status: n.data.status === 'running' ? 'idle' : n.data.status }
             })))
             alert('Failed to start workflow')
+        } finally {
+            executeAbortRef.current = null
         }
     }
 
@@ -113,8 +138,25 @@ export function useWorkflowExecution() {
         if (!workflowId || workflowId === 'new') return
 
         setLoadingState('cancelling', true)
+
+        // Abort any in-flight /execute fetch — prevents late response from
+        // overwriting post-cancel state with a stale "running" run entry.
+        if (executeAbortRef.current) {
+            executeAbortRef.current.abort()
+            executeAbortRef.current = null
+        }
+
         try {
-            await fetch(`/api/workflows/${workflowId}/cancel`, { method: 'POST' })
+            const cancelRes = await fetch(`/api/workflows/${workflowId}/cancel`, { method: 'POST' })
+            const cancelData = await cancelRes.json().catch(() => ({}))
+
+            // Record the cancelled run ID so handleRunWorkflow's late response is discarded.
+            // Use the server-returned runId if available, else fall back to lastRunId.
+            const cancelledId = cancelData.runId || lastRunId
+            if (cancelledId) {
+                cancelledRunIdRef.current = cancelledId
+            }
+
             setLoadingState('executing', false)
 
             // Kill the WebSocket subscription — the CANCELED event won't fire after this,
@@ -139,8 +181,8 @@ export function useWorkflowExecution() {
 
             // Update run status in the store immediately so the history panel
             // shows 'cancelled' without waiting for a re-fetch.
-            if (lastRunId) {
-                updateRunStatus(lastRunId, 'cancelled')
+            if (cancelledId) {
+                updateRunStatus(cancelledId, 'cancelled')
             }
 
             // Signal RunHistoryList to re-fetch from DB (gets terminal NodeExecution records)

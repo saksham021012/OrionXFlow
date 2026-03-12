@@ -66,10 +66,10 @@ export async function POST(
             nodesToExecute,
         })
 
-        // Persist Trigger.dev run ID so realtime subscription can resume on refresh
-        // and hard cancel can look it up
-        await prisma.workflowRun.update({
-            where: { id: run.id },
+        // Persist Trigger.dev run ID IMMEDIATELY so the cancel route can always
+        // find it. Guard: don't overwrite if cancel already flipped status to 'cancelled'.
+        await prisma.workflowRun.updateMany({
+            where: { id: run.id, status: 'running' },
             data: { triggerRunId: handle.id },
         })
 

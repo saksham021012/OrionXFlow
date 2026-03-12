@@ -59,6 +59,11 @@ export function useWorkflowRealtimeStatus() {
         // Run already finished — handles reconnect case
         // isCompleted covers SUCCESS, FAILED, CANCELED, TIMED_OUT, etc. in v3 SDK
         if (run.isCompleted) {
+            // Guard: if handleCancelWorkflow already cleared triggerRunId and lastRunId,
+            // this completion event is stale — skip to avoid clobbering post-cancel state.
+            const currentState = useWorkflowStore.getState()
+            if (!currentState.triggerRunId || !currentState.lastRunId) return
+
             // Map trigger status to local run status
             let finalStatus = 'completed'
             if (run.status === 'FAILED' || run.status === 'TIMED_OUT' || run.status === 'CRASHED') finalStatus = 'failed'

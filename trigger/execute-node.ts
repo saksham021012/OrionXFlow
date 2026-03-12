@@ -100,6 +100,36 @@ async function isRunCancelled(runId: string): Promise<boolean> {
     return run?.status === 'cancelled'
 }
 
+async function upsertNodeExecution(data: {
+    runId: string
+    nodeId: string
+    nodeType: string
+    status: string
+    error?: string
+    completedAt?: Date
+}) {
+    const existing = await prisma.nodeExecution.findFirst({
+        where: { runId: data.runId, nodeId: data.nodeId },
+    })
+
+    if (existing) {
+        // Guard: if it's already terminal (e.g. cancelled/failed), do not overwrite with 'running'
+        if (
+            data.status === 'running' &&
+            (existing.status === 'failed' || existing.status === 'completed' || existing.status === 'cancelled')
+        ) {
+            return existing
+        }
+
+        return await prisma.nodeExecution.update({
+            where: { id: existing.id },
+            data,
+        })
+    }
+
+    return await prisma.nodeExecution.create({ data })
+}
+
 
 // ─── executeNodeTask ──────────────────────────────────────────────────────────
 
@@ -148,15 +178,13 @@ export const executeNodeTask = task({
                     const errMessage = (result as any).error?.message || String((result as any).error) || 'Upstream dependency failed'
                     // Upstream failed — single DB write directly to 'failed'
                     const node = nodes.find((n) => n.id === nodeId)!
-                    await prisma.nodeExecution.create({
-                        data: {
-                            runId,
-                            nodeId: node.id,
-                            nodeType: node.type || 'unknown',
-                            status: 'failed',
-                            error: errMessage,
-                            completedAt: new Date(),
-                        },
+                    await upsertNodeExecution({
+                        runId,
+                        nodeId: node.id,
+                        nodeType: node.type || 'unknown',
+                        status: 'failed',
+                        error: errMessage,
+                        completedAt: new Date(),
                     })
                     metadata.root.set(`node_${nodeId}`, {
                         status: 'failed',
@@ -169,22 +197,34 @@ export const executeNodeTask = task({
             }
         }
 
-        // 3. Resolve spec
+        // 3. Re-check cancellation after deps resolved — catches cancels that
+        //    arrived while upstream nodes were running.
+        if (await isRunCancelled(runId)) {
+            metadata.root.set(`node_${nodeId}`, { status: 'cancelled' })
+            return null
+        }
+
+        // 4. Resolve spec
         const node = nodes.find((n) => n.id === nodeId)!
         const spec = resolveNodeSpec(node, edges, upstreamOutputs)
 
-        // 4. Single DB write directly as 'running' (no create-then-update)
-        const exec = await prisma.nodeExecution.create({
-            data: {
-                runId,
-                nodeId: node.id,
-                nodeType: node.type || 'unknown',
-                status: 'running',
-            },
+        // 5. Upsert DB record as 'running' (returns existing if already terminal/cancelled)
+        const exec = await upsertNodeExecution({
+            runId,
+            nodeId: node.id,
+            nodeType: node.type || 'unknown',
+            status: 'running',
         })
+
+        // If cancel API already marked this node as failed/cancelled, abort execution
+        if (exec.status === 'failed' && exec.error === 'Cancelled') {
+            metadata.root.set(`node_${nodeId}`, { status: 'failed', error: 'Cancelled' })
+            return null
+        }
+
         metadata.root.set(`node_${nodeId}`, { status: 'running' })
 
-        // 5. Execute child task
+        // 6. Execute child task
         const startTime = Date.now()
         try {
             const batchResult = await batch.triggerAndWait([

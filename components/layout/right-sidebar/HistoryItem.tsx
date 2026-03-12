@@ -8,7 +8,7 @@ export interface WorkflowRun {
   id: string
   startedAt: string
   completedAt?: string
-  status: 'completed' | 'failed' | 'running' | 'partial'
+  status: 'completed' | 'failed' | 'running' | 'partial' | 'cancelled'
   executionType: 'full' | 'selected' | 'single'
   nodeExecutions?: NodeExecution[]
 }
@@ -24,6 +24,7 @@ export function HistoryItem({ run, isExpanded, onToggle }: HistoryItemProps) {
     switch (status) {
       case 'completed': return 'text-success bg-success/10'
       case 'failed': return 'text-error bg-error/10'
+      case 'cancelled': return 'text-orange-400 bg-orange-400/10'
       case 'running': return 'text-warning bg-warning/10'
       case 'queued': return 'text-blue-400 bg-blue-400/10'
       case 'partial': return 'text-warning bg-warning/10'

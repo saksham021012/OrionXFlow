@@ -88,10 +88,22 @@ export async function POST(
             ...(upserts as any[])
         ])
         
-        // Fetch trigger run from trigger db to cancel
-        if (activeRun.triggerRunId) {
+        // Fetch trigger run from trigger db to cancel.
+        // The execute route may not have persisted triggerRunId yet if cancel
+        // fires immediately — retry once after a short delay.
+        let triggerIdToCancel = activeRun.triggerRunId
+        if (!triggerIdToCancel) {
+            await new Promise(res => setTimeout(res, 1000))
+            const refreshed = await prisma.workflowRun.findUnique({
+                where: { id: activeRun.id },
+                select: { triggerRunId: true },
+            })
+            triggerIdToCancel = refreshed?.triggerRunId ?? null
+        }
+
+        if (triggerIdToCancel) {
             try {
-                await runs.cancel(activeRun.triggerRunId)
+                await runs.cancel(triggerIdToCancel)
             } catch (e) {
                 console.error('Failed to cancel run on trigger.dev:', e)
             }

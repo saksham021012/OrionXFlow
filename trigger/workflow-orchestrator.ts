@@ -99,6 +99,14 @@ export const workflowOrchestratorTask = task({
             // (would cause stale pre-populated results on next workflow open)
 
         } catch (error: any) {
+            // Guard: when runs.cancel() kills us, batchTriggerAndWait throws. Don't
+            // overwrite the 'cancelled' status the cancel API already wrote.
+            const currentRun = await prisma.workflowRun.findUnique({
+                where: { id: runId },
+                select: { status: true },
+            })
+            if (currentRun?.status === 'cancelled') return
+
             await prisma.workflowRun.update({
                 where: { id: runId },
                 data: { status: 'failed', error: error.message, completedAt: new Date() },
