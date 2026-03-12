@@ -76,6 +76,7 @@ export const RunButton = ({ isRunning, isStopping, onRun, onStop }: RunButtonPro
 export const GEMINI_MODELS = [
   'gemini-2.5-flash-lite',
   'gemini-2.5-flash',
+  'gemini-3-flash'
 ]
 
 export const SELECT_CLASS = 'w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#404040] transition-all'
