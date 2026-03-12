@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Clock, RefreshCw, Loader2 } from 'lucide-react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { HistoryItem, WorkflowRun } from './HistoryItem'
+import { NodeExecution } from './NodeExecutionDetails'
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'partial'])
 
@@ -48,17 +49,16 @@ export function RunHistoryList() {
     const isTerminal = TERMINAL_STATUSES.has(run.status)
 
     if (isActiveRun && !isTerminal) {
-      const execMap = new Map<string, WorkflowRun['nodeExecutions'][number]>()
-        ; (run.nodeExecutions || []).forEach(e => execMap.set(e.nodeId, e))
+      const execMap = new Map<string, NodeExecution>()
+        ; (run.nodeExecutions || []).forEach((e: NodeExecution) => execMap.set(e.nodeId, e))
 
       nodes.forEach(n => {
         const liveStatus = n.data.status
         if (liveStatus && liveStatus !== 'idle') {
-          const existing = execMap.get(n.id) ?? {
-            id: `live-${n.id}`,
+          const existing: NodeExecution = execMap.get(n.id) ?? {
             nodeId: n.id,
             nodeType: n.type || 'unknown',
-            startedAt: new Date().toISOString(),
+            status: 'running',
           }
           execMap.set(n.id, {
             ...existing,
@@ -75,7 +75,7 @@ export function RunHistoryList() {
     if (run.status === 'cancelled' && run.nodeExecutions) {
       return {
         ...run,
-        nodeExecutions: run.nodeExecutions.map(exec => ({ ...exec, status: 'cancelled' })),
+        nodeExecutions: run.nodeExecutions.map((exec: NodeExecution) => ({ ...exec, status: 'cancelled' })),
       }
     }
 
