@@ -108,26 +108,37 @@ async function upsertNodeExecution(data: {
     error?: string
     completedAt?: Date
 }) {
-    const existing = await prisma.nodeExecution.findFirst({
-        where: { runId: data.runId, nodeId: data.nodeId },
-    })
-
-    if (existing) {
-        // Guard: if it's already terminal (e.g. cancelled/failed), do not overwrite with 'running'
-        if (
-            data.status === 'running' &&
-            (existing.status === 'failed' || existing.status === 'completed' || existing.status === 'cancelled')
-        ) {
+    // Guard: if trying to set to 'running', we must ensure it's not already terminal
+    if (data.status === 'running') {
+        const existing = await prisma.nodeExecution.findUnique({
+            where: {
+                runId_nodeId: {
+                    runId: data.runId,
+                    nodeId: data.nodeId,
+                }
+            }
+        })
+        if (existing && (existing.status === 'failed' || existing.status === 'completed' || existing.status === 'cancelled')) {
             return existing
         }
-
-        return await prisma.nodeExecution.update({
-            where: { id: existing.id },
-            data,
-        })
     }
 
-    return await prisma.nodeExecution.create({ data })
+    try {
+        // Atomic upsert for safe concurrent creation
+        return await prisma.nodeExecution.upsert({
+            where: {
+                runId_nodeId: {
+                    runId: data.runId,
+                    nodeId: data.nodeId,
+                }
+            },
+            update: data,
+            create: data,
+        })
+    } catch (error) {
+        console.error("Error upserting node execution:", error)
+        throw error
+    }
 }
 
 
@@ -171,7 +182,7 @@ export const executeNodeTask = task({
 
             for (let i = 0; i < depResults.runs.length; i++) {
                 const result = depResults.runs[i]
-                
+
                 if (result.ok) {
                     upstreamOutputs.set(upstreamEdges[i].source, result.output)
                 } else {
