@@ -75,4 +75,5 @@ model NodeExecution {
 
   @@index([runId])
   @@index([nodeId])
+  @@unique([runId, nodeId])
 }
