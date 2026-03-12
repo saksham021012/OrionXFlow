@@ -11,6 +11,7 @@ export function useWorkflowExecution() {
         setWorkflowId, setNodes, setEdges, setLastRunId,
         setTriggerRunId, setPublicAccessToken,
         lastRunCompleted, setLastRunCompleted, runs, setRuns,
+        updateRunStatus,
     } = useWorkflowStore()
 
     // Helper to update loading state
@@ -21,7 +22,6 @@ export function useWorkflowExecution() {
     useEffect(() => {
         if (lastRunCompleted) {
             setLoadingState('executing', false)
-            setLastRunCompleted(false)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastRunCompleted])
@@ -74,8 +74,11 @@ export function useWorkflowExecution() {
             const wId = (!currentId || currentId === 'new') ? savedData.id : currentId
             if (!currentId || currentId === 'new') setWorkflowId(wId)
 
-            // Optimistic update
-            setNodes(nodes.map(n => ({ ...n, data: { ...n.data, status: 'queued', result: undefined, error: undefined } })))
+            // Optimistic update: all nodes get reset to queued for a full run
+            setNodes(useWorkflowStore.getState().nodes.map(n => ({
+                ...n,
+                data: { ...n.data, status: 'queued', result: undefined, error: undefined }
+            })))
 
             // Execute
             const execRes = await fetch(`/api/workflows/${wId}/execute`, {
@@ -88,7 +91,8 @@ export function useWorkflowExecution() {
 
             const execData = await execRes.json()
             const { runId, triggerRunId, publicAccessToken, run } = execData
-            setRuns([run, ...runs])
+            const currentRuns = useWorkflowStore.getState().runs
+            setRuns([run, ...currentRuns])
             setLastRunId(runId)
             setTriggerRunId(triggerRunId)
             setPublicAccessToken(publicAccessToken)
@@ -105,25 +109,43 @@ export function useWorkflowExecution() {
     }
 
     const handleCancelWorkflow = async () => {
-        const { workflowId, nodes } = useWorkflowStore.getState()
+        const { workflowId, nodes, lastRunId } = useWorkflowStore.getState()
         if (!workflowId || workflowId === 'new') return
 
         setLoadingState('cancelling', true)
         try {
             await fetch(`/api/workflows/${workflowId}/cancel`, { method: 'POST' })
             setLoadingState('executing', false)
-            // Close WebSocket subscription — orchestrator is cancelled
+
+            // Kill the WebSocket subscription — the CANCELED event won't fire after this,
+            // so we must handle all cleanup here rather than relying on useWorkflowRealtimeStatus.
             setTriggerRunId(null)
             setPublicAccessToken(null)
 
+            // Update nodes: both 'queued' (never started) and 'running' nodes are cancelled.
+            // 'completed' and 'failed' nodes keep their terminal status.
             setNodes(nodes.map(n => ({
                 ...n,
                 data: {
                     ...n.data,
-                    status: n.data.status === 'running' ? 'failed' : n.data.status,
-                    error: n.data.status === 'running' ? 'Cancelled' : n.data.error,
+                    status: (n.data.status === 'running' || n.data.status === 'queued')
+                        ? 'failed'
+                        : n.data.status,
+                    error: (n.data.status === 'running' || n.data.status === 'queued')
+                        ? 'Cancelled'
+                        : n.data.error,
                 }
             })))
+
+            // Update run status in the store immediately so the history panel
+            // shows 'cancelled' without waiting for a re-fetch.
+            if (lastRunId) {
+                updateRunStatus(lastRunId, 'cancelled')
+            }
+
+            // Signal RunHistoryList to re-fetch from DB (gets terminal NodeExecution records)
+            // and stops the pulsating animation.
+            setLastRunCompleted(true)
         } catch (e) {
             console.error(e)
         } finally {
@@ -141,10 +163,12 @@ export function useWorkflowExecution() {
             const wId = (!currentId || currentId === 'new') ? savedData.id : currentId
             if (!currentId || currentId === 'new') setWorkflowId(wId)
 
-            setNodes(nodes.map(n =>
+            // Reset selected nodes to queued, and ALL other nodes to idle
+            // so we don't have stale 'failed' or 'cancelled' statuses from the previous run
+            setNodes(useWorkflowStore.getState().nodes.map(n =>
                 nodeIds.includes(n.id)
                     ? { ...n, data: { ...n.data, status: 'queued', result: undefined, error: undefined } }
-                    : n
+                    : { ...n, data: { ...n.data, status: 'idle', result: undefined, error: undefined } }
             ))
 
             const execRes = await fetch(`/api/workflows/${wId}/execute`, {
@@ -157,7 +181,8 @@ export function useWorkflowExecution() {
 
             const execData = await execRes.json()
             const { runId, triggerRunId, publicAccessToken, run } = execData
-            setRuns([run, ...runs])
+            const currentRuns = useWorkflowStore.getState().runs
+            setRuns([run, ...currentRuns])
             setLastRunId(runId)
             setTriggerRunId(triggerRunId)
             setPublicAccessToken(publicAccessToken)

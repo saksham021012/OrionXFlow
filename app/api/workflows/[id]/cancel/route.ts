@@ -23,7 +23,11 @@ export async function POST(
                 status: 'running',
                 workflow: { user: { clerkId: userId } }
             },
-            orderBy: { startedAt: 'desc' }
+            orderBy: { startedAt: 'desc' },
+            include: {
+                workflow: true,
+                nodeExecutions: true
+            }
         })
 
         if (!activeRunRaw) {
@@ -32,15 +36,57 @@ export async function POST(
         
         const activeRun = activeRunRaw as any
 
-        // Update status to cancelled
-        await prisma.workflowRun.update({
-            where: { id: activeRun.id },
-            data: {
-                status: 'cancelled',
-                completedAt: new Date(),
-                error: 'Cancelled by user'
+        // Determine which nodes were supposed to run
+        let nodesToExecute: string[] = []
+        if (activeRun.executionType === 'full') {
+            nodesToExecute = (activeRun.workflow.nodes as any[]).map(n => n.id)
+        } else if (activeRun.executionType === 'selected' || activeRun.executionType === 'single') {
+            nodesToExecute = (activeRun.selectedNodeIds as string[]) || []
+        }
+
+        // Prepare NodeExecution updates/creations
+        const existingExecs = new Map(activeRun.nodeExecutions.map((e: any) => [e.nodeId, e.status]))
+        const upserts = nodesToExecute.map(nodeId => {
+            const nodeDef = (activeRun.workflow.nodes as any[]).find(n => n.id === nodeId)
+            const status = existingExecs.get(nodeId)
+            
+            if (status === 'completed' || status === 'failed') {
+                return null // Terminal, leave as is
             }
-        })
+            
+            if (status === 'running' || status === 'queued') {
+                // Update existing stuck record
+                return prisma.nodeExecution.updateMany({
+                    where: { runId: activeRun.id, nodeId },
+                    data: { status: 'failed', error: 'Cancelled', completedAt: new Date() }
+                })
+            }
+            
+            // Doesn't exist yet, create it
+            return prisma.nodeExecution.create({
+                data: {
+                    runId: activeRun.id,
+                    nodeId,
+                    nodeType: nodeDef?.type || 'unknown',
+                    status: 'failed',
+                    error: 'Cancelled',
+                    completedAt: new Date(),
+                }
+            })
+        }).filter(Boolean)
+
+        // Execute all updates in a transaction
+        await prisma.$transaction([
+            prisma.workflowRun.update({
+                where: { id: activeRun.id },
+                data: {
+                    status: 'cancelled',
+                    completedAt: new Date(),
+                    error: 'Cancelled by user'
+                }
+            }),
+            ...(upserts as any[])
+        ])
         
         // Fetch trigger run from trigger db to cancel
         if (activeRun.triggerRunId) {

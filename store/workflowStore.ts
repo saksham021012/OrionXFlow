@@ -179,7 +179,15 @@ export const useWorkflowStore = create<WorkflowState>()(
             name: 'workflow-storage',
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
-                nodes: state.nodes,
+                nodes: state.nodes.map(n => ({
+                    ...n,
+                    data: {
+                        ...n.data,
+                        status: undefined,
+                        result: undefined,
+                        error: undefined,
+                    }
+                })),
                 edges: state.edges,
                 workflowId: state.workflowId,
                 workflowName: state.workflowName

@@ -34,19 +34,32 @@ export function RunHistoryList() {
       return
     }
     fetchRuns()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflowId])
 
+  // Re-fetch from DB when run completes/is cancelled so history shows final NodeExecution records
+  useEffect(() => {
+    if (!lastRunCompleted) return
+    fetchRuns().finally(() => setLastRunCompleted(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastRunCompleted])
+
   // Compute live display runs: merge real-time node statuses for the currently active run
+  // Terminal statuses — runs in these states must never be overlaid with live node data
+  const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'partial'])
+
+  // Compute live display runs: merge real-time node statuses for the currently active run ONLY
   const displayRuns = runs.map((run) => {
-    if (run.id === lastRunId) {
+    // Only overlay live data onto the active run, and only while it's still running
+    const isActiveRun = run.id === lastRunId
+    const isTerminal = TERMINAL_STATUSES.has(run.status)
+
+    if (isActiveRun && !isTerminal) {
       const existingExecs = run.nodeExecutions || []
       const execMap = new Map<string, any>()
-      
-      // Base: existing executions from the DB fetch at start-of-run
+
       existingExecs.forEach((e: any) => execMap.set(e.nodeId, e))
-      
-      // Overlay: live status/result/error from the store (updated by realtime hook)
+
       nodes.forEach(n => {
         const liveStatus = n.data.status
         if (liveStatus && liveStatus !== 'idle') {
@@ -56,7 +69,6 @@ export function RunHistoryList() {
             nodeType: n.type || 'unknown',
             startedAt: new Date().toISOString()
           }
-          
           execMap.set(n.id, {
             ...existing,
             status: liveStatus,
@@ -65,12 +77,10 @@ export function RunHistoryList() {
           })
         }
       })
-      
+
       return {
         ...run,
-        // The run status in the store is updated when complete/failed directly via updateRunStatus
-        // Default to running while no terminal status has been set
-        status: (run.status && run.status !== 'running') ? run.status : 'running' as const,
+        status: 'running' as const,
         nodeExecutions: Array.from(execMap.values())
       }
     }

@@ -27,6 +27,10 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
         // we can skip the fetch to provide an "instant" experience (e.g., after import)
         const store = useWorkflowStore.getState()
         if (id !== 'new' && store.workflowId === id && store.nodes.length > 0) {
+            setNodes(store.nodes.map(n => ({
+                ...n,
+                data: { ...n.data, status: undefined, result: undefined, error: undefined }
+            })))
             setEditName(store.workflowName)
             setLoading(false)
             return

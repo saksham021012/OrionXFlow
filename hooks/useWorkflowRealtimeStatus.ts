@@ -75,10 +75,10 @@ export function useWorkflowRealtimeStatus() {
             return
         }
 
-        // Live update: read flat per-node metadata keys
-        // Use getState() to avoid stale closure on nodes — avoids adding nodes
-        // to deps array which would cause infinite re-run loop
-        if (run.metadata) {
+        // Live update: read flat per-node metadata keys.
+        // Guard: if triggerRunId was already cleared (e.g. user just cancelled),
+        // skip this update — handleCancelWorkflow already wrote the terminal state.
+        if (run.metadata && useWorkflowStore.getState().triggerRunId) {
             const currentNodes = useWorkflowStore.getState().nodes
             const updatedNodes = currentNodes.map((n) => {
                 const nodeMeta = (run.metadata as any)?.[`node_${n.id}`]
