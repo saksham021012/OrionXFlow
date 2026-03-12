@@ -20,8 +20,10 @@ export const generateContent = async (
 
     const parts: any[] = []
 
-    if (prompt && prompt.trim().length > 0) {
-        parts.push({ text: prompt })
+    const promptText = typeof prompt === 'string' ? prompt : JSON.stringify(prompt || '')
+
+    if (promptText && promptText.trim().length > 0) {
+        parts.push({ text: promptText })
     }
 
     // If no prompt and no images, throw an error to avoid 400 from API
@@ -47,10 +49,14 @@ export const generateContent = async (
         }
     }
 
+    const sysInstText = systemInstruction 
+        ? (typeof systemInstruction === 'string' ? systemInstruction : JSON.stringify(systemInstruction))
+        : undefined
+
     const result = await model.generateContent({
         contents: [{ role: 'user', parts }],
-        systemInstruction: systemInstruction
-            ? { role: 'system', parts: [{ text: systemInstruction }] }
+        systemInstruction: sysInstText
+            ? { role: 'system', parts: [{ text: sysInstText }] }
             : undefined,
     })
 

@@ -21,7 +21,7 @@ export const OutputDisplay = ({ isRunning, status, error, result }: OutputDispla
         </div>
         <div className="space-y-1">
           <span className="text-red-500 font-bold uppercase tracking-wider text-xs">Execution Error</span>
-          <p className="text-[10px] text-red-500/80 font-medium">Please check the history sidebar<br/>for detailed error logs</p>
+          <p className="text-[10px] text-red-500/80 font-medium">Please check the history sidebar<br />for detailed error logs</p>
         </div>
       </div>
     ) : result ? (
@@ -48,8 +48,8 @@ export const RunButton = ({ isRunning, isStopping, onRun, onStop }: RunButtonPro
     onClick={isRunning ? onStop : onRun}
     disabled={isStopping}
     className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
-      ${isRunning 
-        ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/50' 
+      ${isRunning
+        ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/50'
         : 'bg-[#2a2a2a] hover:bg-[#333333] border border-[#404040] text-white'}
       ${isStopping ? 'opacity-70 cursor-not-allowed' : ''}
     `}
@@ -75,7 +75,7 @@ export const RunButton = ({ isRunning, isStopping, onRun, onStop }: RunButtonPro
 
 export const GEMINI_MODELS = [
   'gemini-2.5-flash-lite',
-  'gemini-3-flash-preview',
+  'gemini-2.5-flash',
 ]
 
 export const SELECT_CLASS = 'w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#404040] transition-all'
