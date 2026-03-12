@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DIRECT_URL")
   relationMode = "foreignKeys"
 }
 
@@ -45,6 +45,7 @@ model WorkflowRun {
   status         String   // "running", "completed", "failed", "partial"
   executionType  String   // "full", "selected", "single"
   selectedNodeIds Json?   // Array of node IDs if executionType is "selected" or "single"
+  triggerRunId   String?  // Trigger.dev run ID for realtime subscription + hard cancel
   startedAt      DateTime @default(now())
   completedAt    DateTime?
   error          String?

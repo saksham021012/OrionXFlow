@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { ExecuteWorkflowSchema } from '@/lib/schemas'
-import { tasks } from '@trigger.dev/sdk/v3'
+import { tasks, auth as triggerAuth } from '@trigger.dev/sdk/v3'
 import type { Node, Edge } from 'reactflow'
 
 export const dynamic = 'force-dynamic'
@@ -38,14 +38,6 @@ export async function POST(
         const nodes = workflow.nodes as unknown as Node[]
         const edges = workflow.edges as unknown as Edge[]
 
-        // Debug: Check LLM nodes data
-        nodes.forEach(n => {
-            if (n.type === 'llm') {
-                console.log(`[DEBUG] Node ${n.id} data:`, JSON.stringify(n.data, null, 2))
-                console.log(`[DEBUG] Node ${n.id} model:`, n.data.model)
-            }
-        })
-
         // Determine which nodes to execute
         let nodesToExecute: string[]
         if (validated.executionType === 'full') {
@@ -56,7 +48,7 @@ export async function POST(
             nodesToExecute = []
         }
 
-        // Create workflow run
+        // Create workflow run record
         const run = await prisma.workflowRun.create({
             data: {
                 workflowId: workflow.id,
@@ -66,17 +58,37 @@ export async function POST(
             },
         })
 
-        // Hand off execution to Trigger.dev — the API route returns immediately.
-        // The workflow-orchestrator task uses checkpoint-resume (triggerAndWait)
-        // internally, so no serverless compute is consumed while sub-tasks run.
-        await tasks.trigger('workflow-orchestrator', {
+        // Trigger orchestrator — returns a handle with the Trigger.dev run ID
+        const handle = await tasks.trigger('workflow-orchestrator', {
             runId: run.id,
             nodes,
             edges,
             nodesToExecute,
         })
 
-        return NextResponse.json({ runId: run.id })
+        // Persist Trigger.dev run ID so realtime subscription can resume on refresh
+        // and hard cancel can look it up
+        await prisma.workflowRun.update({
+            where: { id: run.id },
+            data: { triggerRunId: handle.id },
+        })
+
+        // Scoped public token — client subscribes to this run only
+        const publicAccessToken = await triggerAuth.createPublicToken({
+            scopes: { read: { runs: [handle.id] } },
+            expirationTime: '1hr',
+        })
+
+        return NextResponse.json({
+            runId: run.id,
+            triggerRunId: handle.id,
+            publicAccessToken,
+            run: {
+                ...run,
+                triggerRunId: handle.id,
+                nodeExecutions: []
+            }
+        })
     } catch (error) {
         console.error('Error executing workflow:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { runs } from '@trigger.dev/sdk/v3'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export async function POST(
         }
 
         // Get the latest running workflow run for this workflow
-        const activeRun = await prisma.workflowRun.findFirst({
+        const activeRunRaw = await prisma.workflowRun.findFirst({
             where: {
                 workflowId: id,
                 status: 'running',
@@ -25,9 +26,11 @@ export async function POST(
             orderBy: { startedAt: 'desc' }
         })
 
-        if (!activeRun) {
+        if (!activeRunRaw) {
             return NextResponse.json({ message: 'No active run found to cancel' }, { status: 404 })
         }
+        
+        const activeRun = activeRunRaw as any
 
         // Update status to cancelled
         await prisma.workflowRun.update({
@@ -38,6 +41,15 @@ export async function POST(
                 error: 'Cancelled by user'
             }
         })
+        
+        // Fetch trigger run from trigger db to cancel
+        if (activeRun.triggerRunId) {
+            try {
+                await runs.cancel(activeRun.triggerRunId)
+            } catch (e) {
+                console.error('Failed to cancel run on trigger.dev:', e)
+            }
+        }
 
         return NextResponse.json({ success: true, runId: activeRun.id })
     } catch (error) {
