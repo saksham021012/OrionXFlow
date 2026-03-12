@@ -20,6 +20,7 @@ import ExtractFrameNode from '@/components/nodes/ExtractFrameNode'
 import BottomToolbar from './BottomToolbar'
 import { SelectionActions } from './SelectionActions'
 import { isValidConnection as validateConnection } from '@/lib/workflow-validation'
+import { useWorkflowRealtimeStatus } from '@/hooks/useWorkflowRealtimeStatus'
 
 const nodeTypes: NodeTypes = {
   text: TextNode,
@@ -31,6 +32,10 @@ const nodeTypes: NodeTypes = {
 }
 
 export default function WorkflowCanvas() {
+  // Mount realtime subscription — subscribes to orchestrator run via WebSocket,
+  // pushes live node status to canvas. No-op when not executing.
+  useWorkflowRealtimeStatus()
+
   const {
     nodes,
     edges,

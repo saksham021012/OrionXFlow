@@ -31,7 +31,7 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData)
   const deleteNode = useWorkflowStore((state) => state.deleteNode)
 
-  const isRunning = data.status === 'running'
+  const isWaitingOrRunning = data.status === 'running' || data.status === 'queued'
   const isFailed = data.status === 'failed'
   const isCompleted = data.status === 'completed'
 
@@ -83,9 +83,9 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
       className={`
         min-w-[280px] max-w-[400px] rounded-lg border bg-[#1a1a1a] p-4 shadow-md transition-all relative group
         ${selected ? 'border-primary ring-2 ring-primary/20' : 'border-[#2a2a2a]'}
-        ${isRunning ? 'border-primary shadow-[0_0_20px_rgba(34,211,238,0.3)] ring-1 ring-primary/50 animate-pulse' : ''}
+        ${isWaitingOrRunning ? 'border-primary shadow-[0_0_20px_rgba(34,211,238,0.3)] ring-1 ring-primary/50 animate-pulse' : ''}
         ${isFailed ? 'border-error shadow-[0_0_15px_rgba(239,68,68,0.15)] ring-1 ring-error/50' : ''}
-        ${isCompleted ? 'border-success/50' : ''}
+        ${isCompleted ? 'border-success bg-success/5 shadow-[0_0_15px_rgba(34,197,94,0.15)] ring-1 ring-success/50' : ''}
       `}
     >
       {/* Input Handles with Labels */}
@@ -137,12 +137,13 @@ function BaseNode({ id, data, children, inputs = [], outputs = [], selected }: B
                 className={`
                   flex items-center gap-1.5 px-2 py-1 rounded bg-[#1a1a1a] border
                   ${data.status === 'running' ? 'border-primary/20 text-primary' : ''}
+                  ${data.status === 'queued' ? 'border-primary/20 text-primary/70' : ''}
                   ${data.status === 'completed' ? 'border-success/20 text-success' : ''}
                   ${data.status === 'failed' ? 'border-error/20 text-error' : ''}
                   ${data.status === 'cancelled' ? 'border-yellow-500/20 text-yellow-500' : ''}
                 `}
               >
-                {data.status === 'running' && <Loader2 className="w-3 h-3 animate-spin" />}
+                {(data.status === 'running' || data.status === 'queued') && <Loader2 className="w-3 h-3 animate-spin" />}
                 {data.status === 'completed' && <Check className="w-3 h-3" />}
                 {data.status === 'failed' && <X className="w-3 h-3" />}
                 {data.status === 'cancelled' && <Ban className="w-3 h-3" />}

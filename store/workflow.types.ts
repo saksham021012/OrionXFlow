@@ -1,6 +1,6 @@
 import { Node, Edge } from 'reactflow'
 
-export type NodeStatus = 'idle' | 'running' | 'completed' | 'failed' | 'cancelled'
+export type NodeStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
 
 export type NodeData = {
     label: string

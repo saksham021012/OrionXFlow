@@ -6,10 +6,8 @@ import { useWorkflowStore } from '@/store/workflowStore'
 import { HistoryItem, WorkflowRun } from './HistoryItem'
 
 export function RunHistoryList() {
-  const { workflowId, lastRunId } = useWorkflowStore()
-  const [runs, setRuns] = useState<WorkflowRun[]>([])
+  const { workflowId, lastRunId, lastRunCompleted, setLastRunCompleted, nodes, runs, setRuns } = useWorkflowStore()
   const [loading, setLoading] = useState(false)
-  const [isPolling, setIsPolling] = useState(false)
   const [expandedRun, setExpandedRun] = useState<string | null>(null)
 
   const fetchRuns = async () => {
@@ -29,26 +27,55 @@ export function RunHistoryList() {
     }
   }
 
+  // Initial fetch when workflow changes
   useEffect(() => {
     if (!workflowId || workflowId === 'new') {
       setRuns([])
       return
     }
-
     fetchRuns()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workflowId])
 
-    const hasRunning = runs.some((r) => r.status === 'running')
-    // Check if the run we just started is missing from the list (wait for it to appear)
-    const missingLastRun = lastRunId && !runs.find(r => r.id === lastRunId)
-
-    if (hasRunning || missingLastRun) {
-      setIsPolling(true)
-      const interval = setInterval(fetchRuns, 1000)
-      return () => clearInterval(interval)
-    } else {
-      setIsPolling(false)
+  // Compute live display runs: merge real-time node statuses for the currently active run
+  const displayRuns = runs.map((run) => {
+    if (run.id === lastRunId) {
+      const existingExecs = run.nodeExecutions || []
+      const execMap = new Map<string, any>()
+      
+      // Base: existing executions from the DB fetch at start-of-run
+      existingExecs.forEach((e: any) => execMap.set(e.nodeId, e))
+      
+      // Overlay: live status/result/error from the store (updated by realtime hook)
+      nodes.forEach(n => {
+        const liveStatus = n.data.status
+        if (liveStatus && liveStatus !== 'idle') {
+          const existing = execMap.get(n.id) || {
+            id: `live-${n.id}`,
+            nodeId: n.id,
+            nodeType: n.type || 'unknown',
+            startedAt: new Date().toISOString()
+          }
+          
+          execMap.set(n.id, {
+            ...existing,
+            status: liveStatus,
+            outputs: n.data.result !== undefined ? n.data.result : existing.outputs,
+            error: n.data.error || existing.error,
+          })
+        }
+      })
+      
+      return {
+        ...run,
+        // The run status in the store is updated when complete/failed directly via updateRunStatus
+        // Default to running while no terminal status has been set
+        status: (run.status && run.status !== 'running') ? run.status : 'running' as const,
+        nodeExecutions: Array.from(execMap.values())
+      }
     }
-  }, [workflowId, lastRunId, runs.some((r) => r.status === 'running'), runs.length])
+    return run
+  }) as WorkflowRun[]
 
   return (
     <div className="h-full flex flex-col">
@@ -63,7 +90,7 @@ export function RunHistoryList() {
           className="p-1 hover:bg-[#2a2a2a] rounded text-[#a0a0a0] hover:text-white transition-all"
           title="Refresh"
         >
-          {isPolling ? (
+          {loading ? (
             <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
           ) : (
             <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -96,7 +123,7 @@ export function RunHistoryList() {
             </p>
           </div>
         ) : (
-          runs.map((run) => (
+          displayRuns.map((run) => (
             <HistoryItem
               key={run.id}
               run={run}

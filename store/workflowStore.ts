@@ -14,7 +14,13 @@ interface WorkflowState {
     workflowName: string
     lastRunId: string | null
 
+    // Realtime execution state
+    triggerRunId: string | null        // Trigger.dev run ID for realtime subscription
+    publicAccessToken: string | null   // Scoped public token for useRealtimeRun
+    lastRunCompleted: boolean          // Signals RunHistoryList + useWorkflowExecution
+
     // History
+    runs: any[]
     past: HistorySnapshot[]
     future: HistorySnapshot[]
 
@@ -31,6 +37,11 @@ interface WorkflowState {
     setWorkflowId: (id: string | null) => void
     setWorkflowName: (name: string) => void
     setLastRunId: (id: string | null) => void
+    setTriggerRunId: (id: string | null) => void
+    setPublicAccessToken: (token: string | null) => void
+    setLastRunCompleted: (v: boolean) => void
+    setRuns: (runs: any[]) => void
+    updateRunStatus: (runId: string, status: string, error?: string) => void
     resetWorkflow: () => void
 
     // History Actions
@@ -48,14 +59,36 @@ export const useWorkflowStore = create<WorkflowState>()(
             workflowId: null,
             workflowName: 'Untitled Workflow',
             lastRunId: null,
+
+            // Realtime
+            triggerRunId: null,
+            publicAccessToken: null,
+            lastRunCompleted: false,
+
             past: [],
             future: [],
+            runs: [],
 
             setNodes: (nodes) => set({ nodes }),
 
             setEdges: (edges) => set({ edges }),
 
             setLastRunId: (id) => set({ lastRunId: id }),
+
+            setTriggerRunId: (id) => set({ triggerRunId: id }),
+
+            setPublicAccessToken: (token) => set({ publicAccessToken: token }),
+
+            setLastRunCompleted: (v) => set({ lastRunCompleted: v }),
+
+            setRuns: (runs) => set({ runs }),
+
+            updateRunStatus: (runId, status, error) => {
+                const { runs } = get()
+                set({
+                    runs: runs.map(r => r.id === runId ? { ...r, status, error: error ?? r.error } : r)
+                })
+            },
 
             onNodesChange: (changes) => {
                 set({
