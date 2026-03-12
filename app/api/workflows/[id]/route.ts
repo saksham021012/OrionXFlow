@@ -86,23 +86,16 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // First verify ownership and get the internal ID
-        const workflowToVerify = await prisma.workflow.findFirst({
+        const result = await prisma.workflow.deleteMany({
             where: {
                 id,
                 user: { clerkId: userId },
             },
-            select: { id: true }
         })
 
-        if (!workflowToVerify) {
+        if (result.count === 0) {
             return NextResponse.json({ error: 'Workflow not found' }, { status: 404 })
         }
-
-
-        await prisma.workflow.delete({
-            where: { id: workflowToVerify.id }
-        })
 
         return NextResponse.json({ success: true })
     } catch (error) {

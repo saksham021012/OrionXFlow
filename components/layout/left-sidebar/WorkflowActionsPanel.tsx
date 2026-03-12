@@ -79,7 +79,7 @@ export function WorkflowActionsPanel({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || executing}
             className="h-10 sm:h-12 rounded-md sm:rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2a2a2a] hover:border-[#404040] transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-white" /> : <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />}

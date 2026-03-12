@@ -36,13 +36,24 @@ export async function POST(
         }
 
         // Update status to cancelled
-        await prisma.workflowRun.update({
+        const updatedRun = await prisma.workflowRun.update({
             where: { id },
             data: {
                 status: 'cancelled',
                 completedAt: new Date()
-            }
+            },
+            select: { triggerRunId: true }
         })
+
+        // Also cancel the Trigger.dev run if we have a run ID
+        if (updatedRun.triggerRunId) {
+            try {
+                const { runs } = await import('@trigger.dev/sdk/v3')
+                await runs.cancel(updatedRun.triggerRunId)
+            } catch (e) {
+                console.error('Failed to cancel trigger run:', e)
+            }
+        }
 
         return NextResponse.json({ success: true })
     } catch (error) {

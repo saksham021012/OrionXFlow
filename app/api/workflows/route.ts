@@ -12,18 +12,20 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Get or create user
-        let user = await prisma.user.findUnique({ where: { clerkId: userId } })
-        if (!user) {
-            const clerkUser = await (await import('@clerk/nextjs/server')).currentUser()
-            user = await prisma.user.create({
-                data: {
-                    clerkId: userId,
-                    email: clerkUser?.emailAddresses[0]?.emailAddress || '',
-                    name: clerkUser?.fullName,
-                },
-            })
-        }
+        // Get or create user atomically via upsert
+        const clerkUser = await (await import('@clerk/nextjs/server')).currentUser()
+        const user = await prisma.user.upsert({
+            where: { clerkId: userId },
+            update: {
+                email: clerkUser?.emailAddresses[0]?.emailAddress || '',
+                name: clerkUser?.fullName || undefined,
+            },
+            create: {
+                clerkId: userId,
+                email: clerkUser?.emailAddresses[0]?.emailAddress || '',
+                name: clerkUser?.fullName,
+            },
+        })
 
         const workflows = await prisma.workflow.findMany({
             where: { userId: user.id },
@@ -52,18 +54,20 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
         const validated = CreateWorkflowSchema.parse(body)
 
-        // Get or create user
-        let user = await prisma.user.findUnique({ where: { clerkId: userId } })
-        if (!user) {
-            const clerkUser = await (await import('@clerk/nextjs/server')).currentUser()
-            user = await prisma.user.create({
-                data: {
-                    clerkId: userId,
-                    email: clerkUser?.emailAddresses[0]?.emailAddress || '',
-                    name: clerkUser?.fullName,
-                },
-            })
-        }
+        // Get or create user atomically via upsert
+        const clerkUser = await (await import('@clerk/nextjs/server')).currentUser()
+        const user = await prisma.user.upsert({
+            where: { clerkId: userId },
+            update: {
+                email: clerkUser?.emailAddresses[0]?.emailAddress || '',
+                name: clerkUser?.fullName || undefined,
+            },
+            create: {
+                clerkId: userId,
+                email: clerkUser?.emailAddresses[0]?.emailAddress || '',
+                name: clerkUser?.fullName,
+            },
+        })
 
         const workflow = await prisma.workflow.create({
             data: {

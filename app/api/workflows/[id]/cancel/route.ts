@@ -44,27 +44,31 @@ export async function POST(
             nodesToExecute = (activeRun.selectedNodeIds as string[]) || []
         }
 
-        // Prepare NodeExecution updates/creations
+        // Prepare NodeExecution updates/creations via upsert to prevent races
         const existingExecs = new Map(activeRun.nodeExecutions.map((e: any) => [e.nodeId, e.status]))
         const upserts = nodesToExecute.map(nodeId => {
             const nodeDef = (activeRun.workflow.nodes as any[]).find(n => n.id === nodeId)
             const status = existingExecs.get(nodeId)
             
-            if (status === 'completed' || status === 'failed') {
+            if (status === 'completed' || status === 'failed' || status === 'cancelled') {
                 return null // Terminal, leave as is
             }
             
-            if (status === 'running' || status === 'queued') {
-                // Update existing stuck record
-                return prisma.nodeExecution.updateMany({
-                    where: { runId: activeRun.id, nodeId },
-                    data: { status: 'failed', error: 'Cancelled', completedAt: new Date() }
-                })
-            }
-            
-            // Doesn't exist yet, create it
-            return prisma.nodeExecution.create({
-                data: {
+            // Upsert handles both existing 'queued'/'running' records 
+            // and records that don't exist yet gracefully
+            return prisma.nodeExecution.upsert({
+                where: {
+                    runId_nodeId: {
+                        runId: activeRun.id,
+                        nodeId
+                    }
+                },
+                update: {
+                    status: 'failed',
+                    error: 'Cancelled',
+                    completedAt: new Date()
+                },
+                create: {
                     runId: activeRun.id,
                     nodeId,
                     nodeType: nodeDef?.type || 'unknown',
