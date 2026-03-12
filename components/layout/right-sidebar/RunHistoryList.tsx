@@ -1,23 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Clock, RefreshCw, Loader2 } from 'lucide-react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { HistoryItem, WorkflowRun } from './HistoryItem'
+
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'partial'])
 
 export function RunHistoryList() {
   const { workflowId, lastRunId, lastRunCompleted, setLastRunCompleted, nodes, runs, setRuns } = useWorkflowStore()
   const [loading, setLoading] = useState(false)
   const [expandedRun, setExpandedRun] = useState<string | null>(null)
 
-  const fetchRuns = async () => {
+  const fetchRuns = useCallback(async () => {
     if (!workflowId || workflowId === 'new') return
-
     try {
       setLoading(true)
       const response = await fetch(`/api/workflows/${workflowId}`, { cache: 'no-store' })
       if (!response.ok) throw new Error('Failed to fetch workflow')
-
       const data = await response.json()
       setRuns(data.runs || [])
     } catch (error) {
@@ -25,7 +25,7 @@ export function RunHistoryList() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [workflowId, setRuns])
 
   // Initial fetch when workflow changes
   useEffect(() => {
@@ -34,40 +34,31 @@ export function RunHistoryList() {
       return
     }
     fetchRuns()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workflowId])
+  }, [workflowId, fetchRuns, setRuns])
 
   // Re-fetch from DB when run completes/is cancelled so history shows final NodeExecution records
   useEffect(() => {
     if (!lastRunCompleted) return
     fetchRuns().finally(() => setLastRunCompleted(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastRunCompleted])
+  }, [lastRunCompleted, fetchRuns, setLastRunCompleted])
 
-  // Compute live display runs: merge real-time node statuses for the currently active run
-  // Terminal statuses — runs in these states must never be overlaid with live node data
-  const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'partial'])
-
-  // Compute live display runs: merge real-time node statuses for the currently active run ONLY
-  const displayRuns = runs.map((run) => {
-    // Only overlay live data onto the active run, and only while it's still running
+  // Merge real-time node statuses for the active run only; terminal runs are never overlaid
+  const displayRuns = runs.map((run): WorkflowRun => {
     const isActiveRun = run.id === lastRunId
     const isTerminal = TERMINAL_STATUSES.has(run.status)
 
     if (isActiveRun && !isTerminal) {
-      const existingExecs = run.nodeExecutions || []
-      const execMap = new Map<string, any>()
-
-      existingExecs.forEach((e: any) => execMap.set(e.nodeId, e))
+      const execMap = new Map<string, WorkflowRun['nodeExecutions'][number]>()
+        ; (run.nodeExecutions || []).forEach(e => execMap.set(e.nodeId, e))
 
       nodes.forEach(n => {
         const liveStatus = n.data.status
         if (liveStatus && liveStatus !== 'idle') {
-          const existing = execMap.get(n.id) || {
+          const existing = execMap.get(n.id) ?? {
             id: `live-${n.id}`,
             nodeId: n.id,
             nodeType: n.type || 'unknown',
-            startedAt: new Date().toISOString()
+            startedAt: new Date().toISOString(),
           }
           execMap.set(n.id, {
             ...existing,
@@ -78,14 +69,18 @@ export function RunHistoryList() {
         }
       })
 
+      return { ...run, status: 'running', nodeExecutions: Array.from(execMap.values()) }
+    }
+
+    if (run.status === 'cancelled' && run.nodeExecutions) {
       return {
         ...run,
-        status: 'running' as const,
-        nodeExecutions: Array.from(execMap.values())
+        nodeExecutions: run.nodeExecutions.map(exec => ({ ...exec, status: 'cancelled' })),
       }
     }
+
     return run
-  }) as WorkflowRun[]
+  })
 
   return (
     <div className="h-full flex flex-col">
@@ -100,25 +95,19 @@ export function RunHistoryList() {
           className="p-1 hover:bg-[#2a2a2a] rounded text-[#a0a0a0] hover:text-white transition-all"
           title="Refresh"
         >
-          {loading ? (
-            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          )}
+          {loading
+            ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+            : <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          }
         </button>
       </div>
 
       {/* Runs List */}
-      <div
-        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 sm:space-y-2"
-        data-lenis-prevent
-      >
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 sm:space-y-2" data-lenis-prevent>
         {!workflowId ? (
           <div className="text-center py-6 sm:py-8 px-4">
             <p className="text-xs sm:text-sm text-[#a0a0a0]">Save the workflow first</p>
-            <p className="text-[10px] sm:text-xs text-[#6b6b6b] mt-1">
-              History is tracked for saved workflows
-            </p>
+            <p className="text-[10px] sm:text-xs text-[#6b6b6b] mt-1">History is tracked for saved workflows</p>
           </div>
         ) : loading && runs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 gap-2">
@@ -128,9 +117,7 @@ export function RunHistoryList() {
         ) : runs.length === 0 ? (
           <div className="text-center py-6 sm:py-8 px-4">
             <p className="text-xs sm:text-sm text-[#a0a0a0]">No workflow runs yet</p>
-            <p className="text-[10px] sm:text-xs text-[#6b6b6b] mt-1">
-              Execute the workflow to see history
-            </p>
+            <p className="text-[10px] sm:text-xs text-[#6b6b6b] mt-1">Execute the workflow to see history</p>
           </div>
         ) : (
           displayRuns.map((run) => (

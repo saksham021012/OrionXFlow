@@ -20,6 +20,9 @@ export interface UseTransloaditReturn {
     reset: () => void
 }
 
+const PENDING_STATUSES = ['ASSEMBLY_UPLOADING', 'ASSEMBLY_EXECUTING', 'ASSEMBLY_REPLAYING']
+const MAX_POLL_ATTEMPTS = 60 // ~2 minutes with 2s delay
+
 /**
  * Custom hook to handle Transloadit file uploads via server-side API
  * Centralizes upload logic and state management
@@ -71,9 +74,6 @@ export function useTransloadit(options: UseTransloaditOptions): UseTransloaditRe
                 formData.append('signature', signature)
                 formData.append('file', file)
 
-                // We use wait: true to get the results in the same request
-                // but the signature API already included the steps
-
                 const uploadResponse = await fetch('https://api2.transloadit.com/assemblies', {
                     method: 'POST',
                     body: formData,
@@ -84,25 +84,27 @@ export function useTransloadit(options: UseTransloaditOptions): UseTransloaditRe
                     throw new Error(errorData.message || 'Upload to Transloadit failed')
                 }
 
-                // Polling or waiting for completion
-
+                // 3. Poll until assembly completes or times out
                 let assemblyData = await uploadResponse.json()
+                let attempts = 0
 
-                // Wait for results if they're not immediately available
-                if (assemblyData.ok === 'ASSEMBLY_EXECUTING') {
-                    const assemblyUrl = assemblyData.assembly_ssl_url
-                    while (assemblyData.ok === 'ASSEMBLY_EXECUTING') {
-                        await new Promise(resolve => setTimeout(resolve, 2000))
-                        const pollResponse = await fetch(assemblyUrl)
-                        assemblyData = await pollResponse.json()
-                    }
+                while (PENDING_STATUSES.includes(assemblyData.ok) && attempts < MAX_POLL_ATTEMPTS) {
+                    attempts++
+                    await new Promise(resolve => setTimeout(resolve, 2000))
+                    const pollResponse = await fetch(assemblyData.assembly_ssl_url)
+                    if (!pollResponse.ok) break
+                    assemblyData = await pollResponse.json()
+                }
+
+                if (attempts >= MAX_POLL_ATTEMPTS) {
+                    throw new Error('Upload timed out after 2 minutes')
                 }
 
                 if (assemblyData.ok !== 'ASSEMBLY_COMPLETED') {
                     throw new Error(assemblyData.message || 'Assembly failed to complete')
                 }
 
-                // 3. Extract results
+                // 4. Extract results
                 const resultKey = fileType === 'image' ? 'optimized' : 'encoded'
                 const uploadedFile = assemblyData.results?.[resultKey]?.[0] || assemblyData.results?.[':original']?.[0]
 
