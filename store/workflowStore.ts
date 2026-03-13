@@ -18,6 +18,9 @@ interface WorkflowState {
     triggerRunId: string | null        // Trigger.dev run ID for realtime subscription
     publicAccessToken: string | null   // Scoped public token for useRealtimeRun
     lastRunCompleted: boolean          // Signals RunHistoryList + useWorkflowExecution
+    isExecuting: boolean
+    isCancelling: boolean
+    isSaving: boolean
 
     // History
     runs: any[]
@@ -40,6 +43,9 @@ interface WorkflowState {
     setTriggerRunId: (id: string | null) => void
     setPublicAccessToken: (token: string | null) => void
     setLastRunCompleted: (v: boolean) => void
+    setIsExecuting: (v: boolean) => void
+    setIsCancelling: (v: boolean) => void
+    setIsSaving: (v: boolean) => void
     setRuns: (runs: any[]) => void
     updateRunStatus: (runId: string, status: string, error?: string) => void
     resetWorkflow: () => void
@@ -64,6 +70,9 @@ export const useWorkflowStore = create<WorkflowState>()(
             triggerRunId: null,
             publicAccessToken: null,
             lastRunCompleted: false,
+            isExecuting: false,
+            isCancelling: false,
+            isSaving: false,
 
             past: [],
             future: [],
@@ -80,6 +89,10 @@ export const useWorkflowStore = create<WorkflowState>()(
             setPublicAccessToken: (token) => set({ publicAccessToken: token }),
 
             setLastRunCompleted: (v) => set({ lastRunCompleted: v }),
+
+            setIsExecuting: (v) => set({ isExecuting: v }),
+            setIsCancelling: (v) => set({ isCancelling: v }),
+            setIsSaving: (v) => set({ isSaving: v }),
 
             setRuns: (runs) => set({ runs }),
 

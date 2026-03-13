@@ -43,7 +43,7 @@ export function WorkflowActionsPanel({
               <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 animate-pulse" />
             )}
             <span>
-              {cancelling ? 'Stopping...' : 'Stop Execution'}
+              {cancelling ? 'Cancelling...' : 'Cancel Execution'}
             </span>
           </button>
         ) : (

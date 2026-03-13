@@ -12,7 +12,7 @@ import { OutputDisplay, RunButton, GEMINI_MODELS, SELECT_CLASS } from './Helpers
 function LLMNode(props: NodeProps<NodeData>) {
   const imageInputCount = props.data.imageInputCount || 1
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData)
-  const { executing, cancelling, handleRunSingleNode, handleCancelWorkflow } = useWorkflowExecution()
+  const { executing, handleRunSingleNode } = useWorkflowExecution()
 
   const inputs = [
     { id: 'system_prompt', label: 'System Prompt', color: 'handle-purple' },
@@ -35,10 +35,6 @@ function LLMNode(props: NodeProps<NodeData>) {
     handleRunSingleNode(props.id)
   }, [props.id, handleRunSingleNode])
 
-  const handleStop = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    handleCancelWorkflow()
-  }, [handleCancelWorkflow])
 
   return (
     <BaseNode
@@ -81,9 +77,7 @@ function LLMNode(props: NodeProps<NodeData>) {
 
           <RunButton
             isRunning={executing}
-            isStopping={cancelling}
             onRun={handleRunModel}
-            onStop={handleStop}
           />
         </div>
       </div>

@@ -38,31 +38,23 @@ export const OutputDisplay = ({ isRunning, status, error, result }: OutputDispla
 
 interface RunButtonProps {
   isRunning: boolean
-  isStopping: boolean
   onRun: () => void
-  onStop: (e: React.MouseEvent) => void
 }
 
-export const RunButton = ({ isRunning, isStopping, onRun, onStop }: RunButtonProps) => (
+export const RunButton = ({ isRunning, onRun }: RunButtonProps) => (
   <button
-    onClick={isRunning ? onStop : onRun}
-    disabled={isStopping}
+    onClick={onRun}
+    disabled={isRunning}
     className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
       ${isRunning
-        ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/50'
+        ? 'bg-[#2a2a2a] border border-[#404040] text-white opacity-70 cursor-not-allowed'
         : 'bg-[#2a2a2a] hover:bg-[#333333] border border-[#404040] text-white'}
-      ${isStopping ? 'opacity-70 cursor-not-allowed' : ''}
     `}
   >
-    {isStopping ? (
+    {isRunning ? (
       <>
-        <Loader2 className="w-3 h-3 animate-spin" />
-        Stopping...
-      </>
-    ) : isRunning ? (
-      <>
-        <div className="w-2 h-2 bg-red-500 rounded-sm" />
-        Stop
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        Running...
       </>
     ) : (
       <>

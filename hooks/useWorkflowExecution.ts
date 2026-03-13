@@ -6,12 +6,14 @@ import { useWorkflowStore } from '@/store/workflowStore'
 
 export function useWorkflowExecution() {
     const router = useRouter()
-    const [loading, setLoading] = useState({ saving: false, executing: false, cancelling: false })
     const {
         setWorkflowId, setNodes, setEdges, setLastRunId,
         setTriggerRunId, setPublicAccessToken,
         lastRunCompleted, setLastRunCompleted, runs, setRuns,
         updateRunStatus,
+        isExecuting, setIsExecuting,
+        isCancelling, setIsCancelling,
+        isSaving, setIsSaving
     } = useWorkflowStore()
 
     // Abort controller for the in-flight /execute fetch — lets cancel kill it mid-request
@@ -21,8 +23,11 @@ export function useWorkflowExecution() {
     const cancelledRunIdRef = useRef<string | null>(null)
 
     // Helper to update loading state
-    const setLoadingState = (key: keyof typeof loading, value: boolean) =>
-        setLoading(prev => ({ ...prev, [key]: value }))
+    const setLoadingState = (key: 'saving' | 'executing' | 'cancelling', value: boolean) => {
+        if (key === 'executing') setIsExecuting(value)
+        else if (key === 'cancelling') setIsCancelling(value)
+        else if (key === 'saving') setIsSaving(value)
+    }
 
     // Clear executing state when realtime hook signals completion.
     useEffect(() => {
@@ -244,9 +249,9 @@ export function useWorkflowExecution() {
     }
 
     return {
-        saving: loading.saving,
-        executing: loading.executing,
-        cancelling: loading.cancelling,
+        saving: isSaving,
+        executing: isExecuting,
+        cancelling: isCancelling,
         handleSave,
         handleRunWorkflow,
         handleRunSingleNode,
