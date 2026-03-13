@@ -166,11 +166,15 @@ export function WorkflowToolsPanel({ onPreparingChange }: WorkflowToolsPanelProp
         .catch(error => {
           console.error('Failed to save sample to database:', error)
           handlePreparingChange(false)
+          useWorkflowStore.getState().setNodes([])
+          useWorkflowStore.getState().setEdges([])
         })
 
     } catch (error) {
       console.error('Failed to load sample workflow:', error)
       alert('Failed to load sample workflow')
+      useWorkflowStore.getState().setNodes([])
+      useWorkflowStore.getState().setEdges([])
       setSampleUploading(false)
       onPreparingChange?.(false)
     }
