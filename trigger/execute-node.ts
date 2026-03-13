@@ -220,7 +220,7 @@ async function runChildTask(execId: string, nodeId: string, spec: NodeSpec): Pro
     }
 }
 
-const setNodeMeta = (nodeId: string, value: object) =>
+const setNodeMeta = (nodeId: string, value: any) =>
     metadata.root.set(`node_${nodeId}`, value)
 
 // --- task ---
