@@ -144,6 +144,87 @@ async function upsertNodeExecution(data: {
 
 // ─── executeNodeTask ──────────────────────────────────────────────────────────
 
+// --- helpers ---
+
+async function resolveUpstreamOutputs(
+    runId: string,
+    nodeId: string,
+    nodes: Node[],
+    edges: Edge[],
+    allNodeIds: string[]
+): Promise<Map<string, any>> {
+    const upstreamEdges = edges.filter(
+        (e) => e.target === nodeId && allNodeIds.includes(e.source)
+    )
+    const outputs = new Map<string, any>()
+    if (upstreamEdges.length === 0) return outputs
+
+    const depResults = await executeNodeTask.batchTriggerAndWait(
+        upstreamEdges.map((e) => ({
+            payload: { runId, nodeId: e.source, nodes, edges, allNodeIds },
+            options: { idempotencyKey: `${runId}-${e.source}`, idempotencyKeyTTL: '1h' },
+        }))
+    )
+
+    for (let i = 0; i < depResults.runs.length; i++) {
+        const result = depResults.runs[i]
+        if (result.ok) {
+            outputs.set(upstreamEdges[i].source, result.output)
+        } else {
+            const errMessage =
+                (result as any).error?.message ?? String((result as any).error) ?? 'Upstream dependency failed'
+            const node = nodes.find((n) => n.id === nodeId)!
+            await upsertNodeExecution({
+                runId, nodeId: node.id, nodeType: node.type || 'unknown',
+                status: 'failed', error: errMessage, completedAt: new Date(),
+            })
+            setNodeMeta(nodeId, { status: 'failed', error: errMessage })
+            throw new Error(`Upstream dependency ${upstreamEdges[i].source} failed`)
+        }
+    }
+    return outputs
+}
+
+async function runChildTask(execId: string, nodeId: string, spec: NodeSpec): Promise<any> {
+    const startTime = Date.now()
+    try {
+        const batchResult = await batch.triggerAndWait([{ id: spec.taskId, payload: spec.inputs }])
+        const childResult = batchResult.runs[0]
+        const elapsed = Date.now() - startTime
+
+        if (childResult.ok) {
+            const output = childResult.output
+            await prisma.nodeExecution.update({
+                where: { id: execId },
+                data: { status: 'completed', outputs: output, inputs: spec.inputs, executionTime: elapsed, completedAt: new Date() },
+            })
+            setNodeMeta(nodeId, { status: 'completed', result: extractScalar(output) })
+            return output
+        }
+
+        const errMsg = (childResult.error as any)?.message ?? String(childResult.error) ?? 'Task failed'
+        await prisma.nodeExecution.update({
+            where: { id: execId },
+            data: { status: 'failed', error: errMsg, inputs: spec.inputs, executionTime: elapsed, completedAt: new Date() },
+        })
+        setNodeMeta(nodeId, { status: 'failed', error: errMsg })
+        throw new Error(errMsg)
+    } catch (error: any) {
+        const elapsed = Date.now() - startTime
+        await prisma.nodeExecution.update({
+            where: { id: execId },
+            data: { status: 'failed', error: error.message, inputs: spec.inputs, executionTime: elapsed, completedAt: new Date() },
+        })
+        setNodeMeta(nodeId, { status: 'failed', error: error.message })
+        throw error
+    }
+}
+
+const setNodeMeta = (nodeId: string, value: object) =>
+    metadata.root.set(`node_${nodeId}`, value)
+
+// --- task ---
+
 export const executeNodeTask = task({
     id: 'execute-node',
     maxDuration: 300,
@@ -156,143 +237,31 @@ export const executeNodeTask = task({
     }) => {
         const { runId, nodeId, nodes, edges, allNodeIds } = payload
 
-        // 1. Cancellation check (DB-based)
         if (await isRunCancelled(runId)) {
-            metadata.root.set(`node_${nodeId}`, { status: 'cancelled' })
+            setNodeMeta(nodeId, { status: 'cancelled' })
             return null
         }
 
-        // 2. Pull upstream deps recursively
-        //    Use batchTriggerAndWait — never Promise.all(triggerAndWait)
-        const upstreamEdges = edges.filter(
-            (e) => e.target === nodeId && allNodeIds.includes(e.source)
-        )
-        const upstreamOutputs = new Map<string, any>()
+        const upstreamOutputs = await resolveUpstreamOutputs(runId, nodeId, nodes, edges, allNodeIds)
 
-        if (upstreamEdges.length > 0) {
-            const depResults = await executeNodeTask.batchTriggerAndWait(
-                upstreamEdges.map((e) => ({
-                    payload: { runId, nodeId: e.source, nodes, edges, allNodeIds },
-                    options: {
-                        idempotencyKey: `${runId}-${e.source}`,
-                        idempotencyKeyTTL: '1h',
-                    },
-                }))
-            )
-
-            for (let i = 0; i < depResults.runs.length; i++) {
-                const result = depResults.runs[i]
-
-                if (result.ok) {
-                    upstreamOutputs.set(upstreamEdges[i].source, result.output)
-                } else {
-                    const errMessage = (result as any).error?.message || String((result as any).error) || 'Upstream dependency failed'
-                    // Upstream failed — single DB write directly to 'failed'
-                    const node = nodes.find((n) => n.id === nodeId)!
-                    await upsertNodeExecution({
-                        runId,
-                        nodeId: node.id,
-                        nodeType: node.type || 'unknown',
-                        status: 'failed',
-                        error: errMessage,
-                        completedAt: new Date(),
-                    })
-                    metadata.root.set(`node_${nodeId}`, {
-                        status: 'failed',
-                        error: errMessage,
-                    })
-                    // THROW instead of returning gracefully, so Trigger.dev registers THIS execute-node task as failed
-                    // which appropriately stops DOWNSTREAM execution that depends on it.
-                    throw new Error(`Upstream dependency ${upstreamEdges[i].source} failed`)
-                }
-            }
-        }
-
-        // 3. Re-check cancellation after deps resolved — catches cancels that
-        //    arrived while upstream nodes were running.
         if (await isRunCancelled(runId)) {
-            metadata.root.set(`node_${nodeId}`, { status: 'cancelled' })
+            setNodeMeta(nodeId, { status: 'cancelled' })
             return null
         }
 
-        // 4. Resolve spec
         const node = nodes.find((n) => n.id === nodeId)!
         const spec = resolveNodeSpec(node, edges, upstreamOutputs)
 
-        // 5. Upsert DB record as 'running' (returns existing if already terminal/cancelled)
         const exec = await upsertNodeExecution({
-            runId,
-            nodeId: node.id,
-            nodeType: node.type || 'unknown',
-            status: 'running',
+            runId, nodeId: node.id, nodeType: node.type || 'unknown', status: 'running',
         })
 
-        // If cancel API already marked this node as failed/cancelled, abort execution
         if (exec.status === 'failed' && exec.error === 'Cancelled') {
-            metadata.root.set(`node_${nodeId}`, { status: 'failed', error: 'Cancelled' })
+            setNodeMeta(nodeId, { status: 'failed', error: 'Cancelled' })
             return null
         }
 
-        metadata.root.set(`node_${nodeId}`, { status: 'running' })
-
-        // 6. Execute child task
-        const startTime = Date.now()
-        try {
-            const batchResult = await batch.triggerAndWait([
-                { id: spec.taskId, payload: spec.inputs },
-            ])
-            const childResult = batchResult.runs[0]
-            const elapsed = Date.now() - startTime
-
-            if (childResult.ok) {
-                const output = childResult.output
-                await prisma.nodeExecution.update({
-                    where: { id: exec.id },
-                    data: {
-                        status: 'completed',
-                        outputs: output,
-                        inputs: spec.inputs,
-                        executionTime: elapsed,
-                        completedAt: new Date(),
-                    },
-                })
-                metadata.root.set(`node_${nodeId}`, {
-                    status: 'completed',
-                    result: extractScalar(output),
-                })
-                return output
-            } else {
-                const errMsg =
-                    (childResult.error as any)?.message ??
-                    String(childResult.error) ??
-                    'Task failed'
-                await prisma.nodeExecution.update({
-                    where: { id: exec.id },
-                    data: {
-                        status: 'failed',
-                        error: errMsg,
-                        inputs: spec.inputs,
-                        executionTime: elapsed,
-                        completedAt: new Date(),
-                    },
-                })
-                metadata.root.set(`node_${nodeId}`, { status: 'failed', error: errMsg })
-                throw new Error(errMsg)
-            }
-        } catch (error: any) {
-            const elapsed = Date.now() - startTime
-            await prisma.nodeExecution.update({
-                where: { id: exec.id },
-                data: {
-                    status: 'failed',
-                    error: error.message,
-                    inputs: spec.inputs,
-                    executionTime: elapsed,
-                    completedAt: new Date(),
-                },
-            })
-            metadata.root.set(`node_${nodeId}`, { status: 'failed', error: error.message })
-            throw error
-        }
+        setNodeMeta(nodeId, { status: 'running' })
+        return runChildTask(exec.id, nodeId, spec)
     },
 })
