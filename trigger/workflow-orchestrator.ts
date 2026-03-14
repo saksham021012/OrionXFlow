@@ -1,19 +1,20 @@
-import { task, metadata } from '@trigger.dev/sdk/v3'
+import { task, metadata, batch } from '@trigger.dev/sdk/v3'
 import { prisma } from '@/lib/prisma'
 import { Node, Edge } from 'reactflow'
-import { executeNodeTask } from './execute-node'
+import { buildGraphMaps, findSourceNodes, getTaskForNodeType, resolveNodeInputs, NodeExecutionPayload } from './utils/graph-traversal'
 
 /**
- * Workflow Orchestrator — Pull Model
+ * Workflow Orchestrator — Push Model (Direct Dispatch)
  *
  * Architecture:
- *   1. workflowOrchestratorTask finds sink nodes (no downstream) and triggers them.
- *   2. Each executeNodeTask PULLS its own upstream deps via batchTriggerAndWait
- *      with idempotency keys — shared deps run exactly once even when triggered
- *      by multiple downstream nodes.
- *   3. Outputs flow through return values, not in-memory maps or extra DB reads.
- *   4. Node status is pushed to the root orchestrator run's metadata so the
- *      client can subscribe via useRealtimeRun with zero polling.
+ *   1. workflowOrchestratorTask resolves the full execution set, builds
+ *      dependency maps, and identifies source nodes (in-degree = 0).
+ *   2. All source nodes are triggered in parallel DIRECTLY to their actual task 
+ *      (e.g., text-execution) via batch.triggerAndWait. execute-node is deleted.
+ *   3. Each node task receives its inputs. Upon completion, it checks the DB 
+ *      to see if its downstream children have ALL upstream dependencies satisfied.
+ *   4. If yes, it triggers the downstream child. Execution propagates forward 
+ *      through the graph recursively, avoiding 4-deep task nesting.
  */
 
 async function determineRunStatus(runId: string): Promise<'completed' | 'failed' | 'partial'> {
@@ -25,8 +26,6 @@ async function determineRunStatus(runId: string): Promise<'completed' | 'failed'
     if (failed === total) return 'failed'
     return 'partial'
 }
-
-// ─── workflowOrchestratorTask ─────────────────────────────────────────────────
 
 export const workflowOrchestratorTask = task({
     id: 'workflow-orchestrator',
@@ -46,44 +45,58 @@ export const workflowOrchestratorTask = task({
             })
             if (!workflowRun) throw new Error('Workflow run not found')
 
-            // Expand nodesToExecute to include all upstream dependencies
-            const allNodesToExecute = new Set(nodesToExecute)
+            const executionSet = new Set(nodesToExecute)
             const addDependencies = (nodeId: string) => {
                 for (const edge of edges.filter((e) => e.target === nodeId)) {
-                    if (!allNodesToExecute.has(edge.source)) {
-                        allNodesToExecute.add(edge.source)
+                    if (!executionSet.has(edge.source)) {
+                        executionSet.add(edge.source)
                         addDependencies(edge.source)
                     }
                 }
             }
             nodesToExecute.forEach(addDependencies)
-            const finalNodesToExecute = Array.from(allNodesToExecute)
 
-            // metadata.set() — orchestrator IS the root run the client subscribes to.
-            // executeNodeTask children use metadata.root.set() to push back up here.
-            for (const nodeId of finalNodesToExecute) {
+            const { depMap, downstreamMap } = buildGraphMaps(nodes, edges, executionSet)
+
+            for (const nodeId of executionSet) {
                 metadata.set(`node_${nodeId}`, { status: 'queued' })
             }
 
-            // Sink nodes have no outgoing edges within the execution set.
-            // Triggering sinks pulls the entire graph recursively.
-            const sinkNodes = finalNodesToExecute.filter(
-                (id) => !edges.some(
-                    (e) => e.source === id && finalNodesToExecute.includes(e.target)
-                )
-            )
+            const sourceNodeIds = findSourceNodes(depMap)
 
-            await executeNodeTask.batchTriggerAndWait(
-                sinkNodes.map((nodeId) => ({
-                    payload: { runId, nodeId, nodes, edges, allNodeIds: finalNodesToExecute },
+            // Trigger ALL source nodes in parallel via batch.triggerAndWait using direct task IDs.
+            // Sinks will trigger downstream recursively upon completion.
+            const tasksToTrigger: any[] = sourceNodeIds.map((nodeId) => {
+                const node = nodes.find(n => n.id === nodeId)!
+                const taskId = getTaskForNodeType(node.type || 'unknown')
+                
+                // Source nodes have no upstream outputs, pass empty {}
+                const inputs = resolveNodeInputs(node, edges, {})
+                
+                const taskPayload: NodeExecutionPayload = {
+                    runId,
+                    nodeId,
+                    nodes,
+                    edges,
+                    depMap,
+                    downstreamMap,
+                    inputs
+                }
+
+                return {
+                    id: taskId,
+                    payload: taskPayload,
                     options: {
                         idempotencyKey: `${runId}-${nodeId}`,
                         idempotencyKeyTTL: '1h',
-                    },
-                }))
-            )
+                    }
+                }
+            })
 
-            // Guard against cancelled run overwriting status
+            if (tasksToTrigger.length > 0) {
+                await batch.triggerAndWait(tasksToTrigger)
+            }
+
             const currentRun = await prisma.workflowRun.findUnique({
                 where: { id: runId },
                 select: { status: true },
@@ -95,12 +108,8 @@ export const workflowOrchestratorTask = task({
                 where: { id: runId },
                 data: { status, completedAt: new Date() },
             })
-            // Results live in NodeExecution records — do NOT write back to workflow.nodes
-            // (would cause stale pre-populated results on next workflow open)
 
         } catch (error: any) {
-            // Guard: when runs.cancel() kills us, batchTriggerAndWait throws. Don't
-            // overwrite the 'cancelled' status the cancel API already wrote.
             const currentRun = await prisma.workflowRun.findUnique({
                 where: { id: runId },
                 select: { status: true },
