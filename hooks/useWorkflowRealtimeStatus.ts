@@ -18,6 +18,7 @@ export function useWorkflowRealtimeStatus() {
         publicAccessToken,
         setNodes,
         setEdges,
+        setRuns,
         setTriggerRunId,
         setPublicAccessToken,
         setLastRunCompleted,
@@ -40,10 +41,12 @@ export function useWorkflowRealtimeStatus() {
             if (!res.ok) return
             const data = await res.json()
             setEdges(data.edges || [])
+            // Picks up the real status the orchestrator wrote (partial/completed/failed)
+            setRuns(data.runs || [])
         } catch (e) {
             console.error('[Realtime] Failed to fetch final workflow state:', e)
         }
-    }, [workflowId, setEdges])
+    }, [workflowId, setEdges, setRuns])
 
     const clearSubscriptionState = useCallback(() => {
         setTriggerRunId(null)
@@ -64,19 +67,18 @@ export function useWorkflowRealtimeStatus() {
             const currentState = useWorkflowStore.getState()
             if (!currentState.triggerRunId || !currentState.lastRunId) return
 
-            // Map trigger status to local run status
-            let finalStatus = 'completed'
-            if (run.status === 'FAILED' || run.status === 'TIMED_OUT' || run.status === 'CRASHED') finalStatus = 'failed'
-            if (run.status === 'CANCELED') finalStatus = 'cancelled'
-
-            if (lastRunId) {
-                updateRunStatus(lastRunId, finalStatus)
+            if (run.status === 'CANCELED') {
+                // Cancel is handled by handleCancelWorkflow — skip
+            } else if (run.status === 'FAILED' || run.status === 'TIMED_OUT' || run.status === 'CRASHED') {
+                // Orchestrator itself crashed — set failed immediately, then sync
+                if (lastRunId) updateRunStatus(lastRunId, 'failed')
+                fetchFinalWorkflowState().then(() => clearSubscriptionState())
+            } else {
+                // COMPLETED: the orchestrator wrote the real status (completed/partial/failed)
+                // to the DB. fetchFinalWorkflowState calls setRuns which picks it up — no
+                // need to call updateRunStatus with a guessed value here.
+                fetchFinalWorkflowState().then(() => clearSubscriptionState())
             }
-
-            // Await fetch before clearing so RunHistoryList doesn't see stale data
-            fetchFinalWorkflowState().then(() => {
-                clearSubscriptionState()
-            })
             return
         }
 
