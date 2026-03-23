@@ -141,7 +141,7 @@ export function resolveNodeInputs(node: Node, edges: Edge[], outputs: OutputMap)
  */
 export async function checkAndTriggerDownstream(
     runId: string,
-    nodeId: string, // the node that just finished
+    nodeId: string,
     nodes: Node[],
     edges: Edge[],
     depMap: DepMap,
@@ -152,23 +152,21 @@ export async function checkAndTriggerDownstream(
 
     const tasksToTrigger: any[] = []
 
+    const allRequiredDepIds = [...new Set(downstreamIds.flatMap(id => depMap[id] || []))]
+
+    const allExecutions = await prisma.nodeExecution.findMany({
+        where: { runId, nodeId: { in: allRequiredDepIds } }
+    })
+
+    const execByNodeId = Object.fromEntries(allExecutions.map(e => [e.nodeId, e]))
+
     for (const childId of downstreamIds) {
         const requiredDepIds = depMap[childId] || []
-        
-        // Query the DB to check status of all upstream dependencies for this child
-        const siblingExecutions = await prisma.nodeExecution.findMany({
-            where: {
-                runId,
-                nodeId: { in: requiredDepIds }
-            }
-        })
+        const completedDeps = requiredDepIds
+            .map(id => execByNodeId[id])
+            .filter(ex => ex?.status === 'completed')
 
-        // Check if all required deps have a 'completed' status
-        const completedDeps = siblingExecutions.filter(ex => ex.status === 'completed')
-        
         if (completedDeps.length === requiredDepIds.length) {
-            // All deps are completed! We can trigger the child.
-            // Assemble the outputs maps from the DB records
             const outputs: OutputMap = {}
             for (const exec of completedDeps) {
                 outputs[exec.nodeId] = exec.outputs
@@ -200,8 +198,6 @@ export async function checkAndTriggerDownstream(
     }
 
     if (tasksToTrigger.length > 0) {
-        // We do NOT wait here. We trigger asynchronously so this task can finish and exit immediately.
-        // Waiting here would lock the worker and defeat the purpose.
         await batch.triggerAndWait(tasksToTrigger)
     }
 }
@@ -235,13 +231,13 @@ export async function handleNodeExecution(
 
     try {
         resultOutput = await executeFn(inputs)
-        
+
         if (resultOutput?.success === false) {
-             throw new Error(resultOutput.error || 'Execution failed')
+            throw new Error(resultOutput.error || 'Execution failed')
         }
 
         const elapsed = Date.now() - startTime
-        
+
         await prisma.nodeExecution.upsert({
             where: { runId_nodeId: { runId, nodeId } },
             update: { status: 'completed', outputs: resultOutput, inputs, executionTime: elapsed, completedAt: new Date() },
@@ -253,7 +249,7 @@ export async function handleNodeExecution(
     } catch (error: any) {
         const elapsed = Date.now() - startTime
         const errMsg = error.message || 'Task failed'
-        
+
         await prisma.nodeExecution.upsert({
             where: { runId_nodeId: { runId, nodeId } },
             update: { status: 'failed', error: errMsg, inputs, executionTime: elapsed, completedAt: new Date() },
