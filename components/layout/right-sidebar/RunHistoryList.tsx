@@ -69,18 +69,7 @@ export function RunHistoryList() {
         }
       })
 
-      const allExecs = Array.from(execMap.values())
-      const terminalSet = new Set(['completed', 'failed', 'cancelled'])
-      const allTerminal = allExecs.length > 0 && allExecs.every(e => terminalSet.has(e.status))
-
-      let optimisticStatus: string = 'running'
-      if (allTerminal) {
-        const hasFailure = allExecs.some(e => e.status === 'failed' || e.status === 'cancelled')
-        const allFailed = allExecs.every(e => e.status === 'failed' || e.status === 'cancelled')
-        optimisticStatus = allFailed ? 'failed' : hasFailure ? 'partial' : 'completed'
-      }
-
-      return { ...run, status: optimisticStatus, nodeExecutions: allExecs }
+      return { ...run, status: 'running', nodeExecutions: Array.from(execMap.values()) }
     }
 
     if (run.status === 'cancelled' && run.nodeExecutions) {
