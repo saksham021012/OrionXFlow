@@ -1,11 +1,11 @@
 'use client'
 
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useRef } from 'react'
 import { NodeProps } from 'reactflow'
 import BaseNode from './BaseNode'
 import { NodeData } from '@/store/workflowStore'
 import { useWorkflowStore } from '@/store/workflowStore'
-import { Upload, AlertCircle } from 'lucide-react'
+import { Upload, RefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import { useTransloadit } from '@/hooks/useTransloadit'
 
@@ -50,7 +50,7 @@ function UploadImageNode(props: NodeProps<NodeData>) {
       outputs={[{ id: 'image_output', label: 'Image URL', color: 'handle-cyan' }]}
     >
       <div className="space-y-2">
-        <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-[#404040] rounded-lg cursor-pointer hover:border-primary transition-all">
+        <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-[#404040] rounded-lg cursor-pointer hover:border-primary transition-all relative group/upload">
           <input
             type="file"
             accept=".jpg,.jpeg,.png,.webp,.gif"
@@ -61,14 +61,21 @@ function UploadImageNode(props: NodeProps<NodeData>) {
           {uploading ? (
             <span className="text-sm text-[#a0a0a0]">Uploading...</span>
           ) : props.data.value ? (
-            <div className="relative w-full h-full p-2">
-              <Image
-                src={props.data.value}
-                alt="Uploaded"
-                fill
-                className="object-contain rounded"
-              />
-            </div>
+            <>
+              <div className="relative w-full h-full p-2">
+                <Image
+                  src={props.data.value}
+                  alt="Uploaded"
+                  fill
+                  className="object-contain rounded"
+                />
+              </div>
+              {/* Replace overlay */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/upload:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center gap-1.5 pointer-events-none">
+                <RefreshCw className="w-5 h-5 text-white" />
+                <span className="text-xs text-white font-medium">Click to replace</span>
+              </div>
+            </>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <Upload className="w-6 h-6 text-[#a0a0a0]" />

@@ -77,6 +77,7 @@ function LLMNode(props: NodeProps<NodeData>) {
 
           <RunButton
             isRunning={executing}
+            status={props.data.status}
             onRun={handleRunModel}
           />
         </div>

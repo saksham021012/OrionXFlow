@@ -22,8 +22,8 @@ const COMPATIBILITY_MATRIX: Record<HandleType, HandleType[]> = {
     system: ['system', 'user', 'output'],  // System prompts accept text-like inputs
     user: ['user', 'output'],               // User messages accept text-like inputs
     text: ['system', 'user', 'param', 'output'], // Text can go to text inputs
-    image: ['image', 'video', 'output'],    // Images accept image and video data (multimodal)
-    video: ['video', 'image', 'output'],    // Videos can connect to video inputs OR image inputs (for LLMs)
+    image: ['image', 'output'],             // Image sources connect to image targets only (not video targets like ExtractFrame)
+    video: ['video', 'image', 'output'],    // Video sources can connect to video targets AND image targets (LLM multimodal inputs)
     param: ['param', 'output'],             // Params accept param data
     output: ['system', 'user', 'image', 'video', 'param', 'text'], // Generic output can go anywhere
     unknown: ['unknown'],                   // Unknown types only connect to unknown
