@@ -67,6 +67,7 @@ function UploadImageNode(props: NodeProps<NodeData>) {
                   src={props.data.value}
                   alt="Uploaded"
                   fill
+                  unoptimized
                   className="object-contain rounded"
                 />
               </div>
